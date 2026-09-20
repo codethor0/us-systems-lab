@@ -1,0 +1,55 @@
+name: Data or model change
+description: Propose a baseline, provenance, range, or directed relationship change.
+title: "[Data/Model] "
+body:
+  - type: dropdown
+    id: classification
+    attributes:
+      label: Change classification
+      options:
+        - Observed baseline
+        - Projected baseline
+        - Source or provenance metadata
+        - Editorial display range
+        - Modeled relationship
+        - Empirical relationship
+    validations:
+      required: true
+
+  - type: textarea
+    id: affected
+    attributes:
+      label: Affected nodes or edges
+      description: List the exact node IDs, edge IDs, or metadata fields that would change.
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and primary sources
+      description: Provide source URLs, publication names, as-of dates, retrieval dates, and the precise fact or relationship each source supports.
+    validations:
+      required: true
+
+  - type: textarea
+    id: claim
+    attributes:
+      label: Proposed claim or value
+      description: State the exact new value, metadata, direction, strength, confidence classification, or claim text.
+    validations:
+      required: true
+
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Rationale
+      description: Explain why the proposed change belongs in the model without presenting a modeled relationship as proven causality.
+    validations:
+      required: true
+
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation
+      description: Identify tests, calculations, or reproducible checks that should change or remain invariant.
