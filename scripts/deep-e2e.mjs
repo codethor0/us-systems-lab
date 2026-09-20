@@ -349,6 +349,7 @@ async function staticState(cdp) {
       const header = document.querySelector('header');
       const title = document.querySelector('h1');
       const firstCard = cards[0];
+      const firstCardTitle = firstCard?.querySelector('h2') ?? null;
       const sourceLinks = [...document.querySelectorAll('a[aria-label="Baseline source"]')];
       const r1 = wrapper?.getBoundingClientRect();
       const r2 = flow?.getBoundingClientRect();
@@ -368,6 +369,7 @@ async function staticState(cdp) {
       const bodyBackground = getComputedStyle(document.body).backgroundColor;
       const headerBackground = header ? getComputedStyle(header).backgroundColor : null;
       const cardBackground = firstCard ? getComputedStyle(firstCard).backgroundColor : null;
+      const cardTitleColor = firstCardTitle ? getComputedStyle(firstCardTitle).color : null;
       const titleColor = title ? getComputedStyle(title).color : null;
 
       return {
@@ -384,6 +386,8 @@ async function staticState(cdp) {
         headerBackgroundRgba: headerBackground ? cssColorRgba(headerBackground) : null,
         cardBackground,
         cardBackgroundRgba: cardBackground ? cssColorRgba(cardBackground) : null,
+        cardTitleColor,
+        cardTitleColorRgba: cardTitleColor ? cssColorRgba(cardTitleColor) : null,
         titleColor,
         titleColorRgba: titleColor ? cssColorRgba(titleColor) : null,
         titleBackground: headerBackground,
@@ -670,6 +674,14 @@ async function run() {
     if (!isNearWhite(staticDesktop.cardBackgroundRgba))
       fail(
         `cards are not white: ${staticDesktop.cardBackground} -> ${JSON.stringify(staticDesktop.cardBackgroundRgba)}`,
+      );
+    if (
+      !staticDesktop.cardTitleColorRgba ||
+      !staticDesktop.cardBackgroundRgba ||
+      contrast(staticDesktop.cardTitleColorRgba, staticDesktop.cardBackgroundRgba) < 4.5
+    )
+      fail(
+        `card title contrast is below 4.5:1: ${JSON.stringify(staticDesktop.cardTitleColorRgba)} on ${JSON.stringify(staticDesktop.cardBackgroundRgba)}`,
       );
     if (
       !staticDesktop.titleColorRgba ||
