@@ -6,7 +6,13 @@ import { decodeScenario } from "../scenario/url";
 import type { DecodedScenario } from "../scenario/url";
 import { GraphCanvas } from "./GraphCanvas";
 import { ScenarioNotice } from "./ScenarioNotice";
-import { changeLever, clearRuntime, createRuntime, scenarioLocation } from "./runtime";
+import {
+  changeLever,
+  clearRuntime,
+  createRuntime,
+  normalizeLeversForUi,
+  scenarioLocation,
+} from "./runtime";
 
 const GRAPH = parseGraph(graphJson);
 const STAMP = dataStamp(GRAPH);
@@ -17,10 +23,32 @@ interface InitialUiState {
   readonly search: string;
 }
 
+function sameLevers(
+  left: ReadonlyMap<string, number>,
+  right: ReadonlyMap<string, number>,
+): boolean {
+  if (left.size !== right.size) return false;
+  for (const [id, value] of left) {
+    if (right.get(id) !== value) return false;
+  }
+  return true;
+}
+
 function initialUiState(): InitialUiState {
   const search = window.location.search;
   const report = decodeScenario(search, GRAPH, STAMP);
-  return { report, runtime: createRuntime(GRAPH, report.levers), search };
+  const uiLevers = normalizeLeversForUi(report.levers);
+  const runtime = createRuntime(GRAPH, uiLevers);
+
+  if (!sameLevers(uiLevers, report.levers)) {
+    window.history.replaceState(
+      null,
+      "",
+      scenarioLocation(window.location.pathname, window.location.hash, uiLevers, STAMP),
+    );
+  }
+
+  return { report, runtime, search };
 }
 
 export function App() {

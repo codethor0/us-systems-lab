@@ -14,6 +14,8 @@ describe("light presentation contract", () => {
     expect(app).toContain("text-slate-950");
     expect(card).toContain("bg-white p-3 text-slate-900 shadow-sm");
     expect(card).toContain("border-slate-200 shadow-slate-200/70");
+    expect(card).toContain("leading-tight text-slate-950");
+    expect(card).not.toContain("leading-tight text-white");
     expect(notice).toContain("bg-amber-50");
     expect(notice).toContain("bg-slate-50");
     expect(notice).toContain("bg-rose-50");

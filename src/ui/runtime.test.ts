@@ -2,12 +2,52 @@ import { describe, expect, it } from "vitest";
 import graphJson from "../data/graph.json";
 import { parseGraph } from "../lib/validate";
 import { dataStamp } from "../scenario/stamp";
-import { changeLever, clearRuntime, createRuntime, scenarioLocation } from "./runtime";
+import {
+  changeLever,
+  clearRuntime,
+  createRuntime,
+  normalizeLeversForUi,
+  scenarioLocation,
+} from "./runtime";
 
 const graph = parseGraph(graphJson);
 const stamp = dataStamp(graph);
 
 describe("UI scenario runtime", () => {
+  it("snaps decoded values to the 10-percent slider grid, symmetric around zero", () => {
+    const normalized = normalizeLeversForUi(
+      new Map([
+        ["fed_rate", 0.55],
+        ["inflation", -0.55],
+        ["productivity", 0.54],
+        ["poverty_rate", 0.56],
+        ["unemployment", -0.54],
+        ["gdp", -0.56],
+        ["wages", 0.25],
+        ["debt", -0.25],
+        ["media_trust", 0.04],
+        ["hate_crimes", -0.04],
+        ["home_prices", 1],
+        ["homelessness", -1],
+      ]),
+    );
+
+    expect(normalized).toEqual(
+      new Map([
+        ["fed_rate", 0.6],
+        ["inflation", -0.6],
+        ["productivity", 0.5],
+        ["poverty_rate", 0.6],
+        ["unemployment", -0.5],
+        ["gdp", -0.6],
+        ["wages", 0.3],
+        ["debt", -0.3],
+        ["home_prices", 1],
+        ["homelessness", -1],
+      ]),
+    );
+  });
+
   it("loads an existing scenario without flashing every affected node", () => {
     const runtime = createRuntime(graph, new Map([["fed_rate", 0.5]]));
     expect(runtime.levers.get("fed_rate")).toBe(0.5);

@@ -349,6 +349,7 @@ async function staticState(cdp) {
       const header = document.querySelector('header');
       const title = document.querySelector('h1');
       const firstCard = cards[0];
+      const firstCardTitle = firstCard?.querySelector('h2') ?? null;
       const sourceLinks = [...document.querySelectorAll('a[aria-label="Baseline source"]')];
       const r1 = wrapper?.getBoundingClientRect();
       const r2 = flow?.getBoundingClientRect();
@@ -368,6 +369,7 @@ async function staticState(cdp) {
       const bodyBackground = getComputedStyle(document.body).backgroundColor;
       const headerBackground = header ? getComputedStyle(header).backgroundColor : null;
       const cardBackground = firstCard ? getComputedStyle(firstCard).backgroundColor : null;
+      const cardTitleColor = firstCardTitle ? getComputedStyle(firstCardTitle).color : null;
       const titleColor = title ? getComputedStyle(title).color : null;
 
       return {
@@ -384,6 +386,8 @@ async function staticState(cdp) {
         headerBackgroundRgba: headerBackground ? cssColorRgba(headerBackground) : null,
         cardBackground,
         cardBackgroundRgba: cardBackground ? cssColorRgba(cardBackground) : null,
+        cardTitleColor,
+        cardTitleColorRgba: cardTitleColor ? cssColorRgba(cardTitleColor) : null,
         titleColor,
         titleColorRgba: titleColor ? cssColorRgba(titleColor) : null,
         titleBackground: headerBackground,
@@ -672,6 +676,14 @@ async function run() {
         `cards are not white: ${staticDesktop.cardBackground} -> ${JSON.stringify(staticDesktop.cardBackgroundRgba)}`,
       );
     if (
+      !staticDesktop.cardTitleColorRgba ||
+      !staticDesktop.cardBackgroundRgba ||
+      contrast(staticDesktop.cardTitleColorRgba, staticDesktop.cardBackgroundRgba) < 4.5
+    )
+      fail(
+        `card title contrast is below 4.5:1: ${JSON.stringify(staticDesktop.cardTitleColorRgba)} on ${JSON.stringify(staticDesktop.cardBackgroundRgba)}`,
+      );
+    if (
       !staticDesktop.titleColorRgba ||
       !staticDesktop.titleBackgroundRgba ||
       contrast(staticDesktop.titleColorRgba, staticDesktop.titleBackgroundRgba) < 7
@@ -695,6 +707,46 @@ async function run() {
     }
 
     await capture(cdp, path.join(ARTIFACT_DIR, "desktop-baseline.png"));
+
+    const offGridLoaded = cdp.waitFor("Page.loadEventFired", 12000);
+    const offGridNavigation = await cdp.send(
+      "Page.navigate",
+      { url: `${BASE_URL}/?l=fed_rate:55` },
+      12000,
+    );
+    if (offGridNavigation.errorText)
+      fail(`off-grid scenario navigation failed: ${offGridNavigation.errorText}`);
+    await offGridLoaded;
+    await sleep(500);
+    const offGridScenario = await evaluate(
+      cdp,
+      `(() => {
+        const slider = document.querySelector('#lever-fed_rate');
+        const output = document.querySelector('[data-node-id="fed_rate"] output');
+        const card = document.querySelector('[data-node-id="fed_rate"]');
+        return {
+          sliderValue: slider?.value ?? null,
+          label: output?.textContent?.trim() ?? null,
+          search: location.search,
+          effect: card?.getAttribute('data-effect') ?? null,
+        };
+      })()`,
+    );
+    report.offGridScenario = offGridScenario;
+    if (offGridScenario.sliderValue !== "60")
+      fail(`off-grid URL did not normalize the slider to 60: ${JSON.stringify(offGridScenario)}`);
+    if (offGridScenario.label !== "+60% of display range")
+      fail(`off-grid URL left the label inconsistent: ${JSON.stringify(offGridScenario)}`);
+    if (
+      !offGridScenario.search.includes("fed_rate:60") ||
+      offGridScenario.search.includes("fed_rate:55")
+    )
+      fail(`off-grid URL was not canonicalized: ${JSON.stringify(offGridScenario)}`);
+    if (offGridScenario.effect !== "up")
+      fail(
+        `off-grid URL did not drive the model from the normalized value: ${JSON.stringify(offGridScenario)}`,
+      );
+    await resetScenario(cdp);
 
     for (const node of graph.nodes) {
       const reachable = simpleReachable(graph, node.id, maxHops);

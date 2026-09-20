@@ -52,7 +52,7 @@ export function IndicatorCard({
         <span>{node.valueType}</span>
       </div>
 
-      <h2 className="mt-1 line-clamp-2 text-sm font-semibold leading-tight text-white">
+      <h2 className="mt-1 line-clamp-2 text-sm font-semibold leading-tight text-slate-950">
         {node.label}
       </h2>
 
