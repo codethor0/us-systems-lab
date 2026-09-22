@@ -28,7 +28,7 @@ export default defineConfig(
     extends: [tseslint.configs.disableTypeChecked],
   },
   {
-    // The browser crawler runs under Node and uses Node's built-in web APIs.
+    // Repository scripts run under Node and use its built-in web APIs.
     files: ["scripts/**/*.mjs"],
     languageOptions: {
       globals: {

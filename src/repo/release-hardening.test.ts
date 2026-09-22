@@ -11,8 +11,8 @@ function read(path: string): string {
 
 const workflow = read(".github/workflows/ci.yml");
 const testing = read("TESTING.md");
-const crawler = read("scripts/deep-e2e.mjs");
-const css = read("src/styles.css");
+const crawler = read("scripts/check-sources.mjs");
+const css = read("src/ui/blocks/board.css");
 const headers = read("public/_headers");
 const prettierIgnore = read(".prettierignore");
 const packageJson = JSON.parse(read("package.json") || "{}") as { packageManager?: string };
@@ -33,7 +33,7 @@ describe("release hardening contracts", () => {
   });
 
   it("documents verification layers and their assurance limits", () => {
-    expect(testing).toContain("USL_E2E_CRAWL_SOURCES=1");
+    expect(testing).toContain("npm run check:sources");
     expect(testing).toContain("best-effort external source reachability report");
     expect(testing).toContain("does not establish source validity");
     expect(testing).toContain("No automated axe/WCAG conformance scan");
@@ -45,12 +45,10 @@ describe("release hardening contracts", () => {
     expect(crawler).not.toContain("ok: response.status < 500");
   });
 
-  it("keeps node flash one-shot and provides a reduced-motion path", () => {
-    const easing = ["ease", "out"].join("-");
-    const oneShot = `animation: usl-node-flash 620ms ${easing} 1;`;
-    expect(css).toContain(oneShot);
+  it("keeps the tile pulse one-shot and provides a reduced-motion path", () => {
+    expect(css).toMatch(/\.bb-pulse\s*\{[^}]*animation:\s*bb-response-pulse 700ms ease-in-out 1;/);
     expect(css).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*?animation-duration:\s*1ms;/,
+      /@media \(prefers-reduced-motion: reduce\)\s*\{[^}]*\.bb-pulse\s*\{[^}]*animation:\s*none;/,
     );
   });
 
