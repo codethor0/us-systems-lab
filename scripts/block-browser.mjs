@@ -273,7 +273,9 @@ export async function startBrowser(root, artifacts) {
     browser = spawn(
       chrome,
       [
-        ...(process.env.USL_CHROME_NO_SANDBOX === "1" ? ["--no-sandbox"] : []),
+        ...(process.env.USL_CHROME_NO_SANDBOX === "1"
+          ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+          : []),
         "--headless=new",
         "--disable-gpu",
         "--no-first-run",
