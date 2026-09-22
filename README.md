@@ -1,20 +1,53 @@
 # US Systems Lab
 
-An interactive causal graph of U.S. economic and social indicators. Move a lever on one indicator
-and see which connected indicators shift, in which direction, and roughly how much.
+An interactive block board of U.S. economic and social indicators. Each indicator is a tile of 100
+squares. Move one input and watch the tiles it is connected to gain or lose squares and change color.
 
 > **Read this first.** This is an illustrative model for exploring how systems connect. It is not
 > a predictive economic tool and not a forecast. The numbers it propagates are arithmetic on
 > hand-assigned weights, not estimates of what would happen if a real policy or event moved a real
 > indicator.
 
+## Using the board
+
+- Every tile starts at **50 out of 100** and red, labeled **Not adjusted**. The 50 is a display
+  convention that leaves room to move both up and down. It is not a health rating.
+- Set **your input** for a tile with its slider, or click a square. Inputs move in steps of five.
+- The squares and **Combined response (automatic)** bar show the tile's **combined result**: your input plus the effects that reach it from
+  other inputs, over paths of up to three relationships. The automatic bar shows a continuous position,
+  while squares are rounded. Displayed results never become new inputs.
+- Color shows level, lower to higher. It does not show worse to better: a higher federal debt is
+  not a better one.
+- Open **Why & source** on a tile for the paths behind its result, the relationships it belongs to,
+  and the stored baseline with its source. A stored baseline does not change with your input.
+- **Reset** returns every tile to 50. **Share** shows a link that reproduces your inputs.
+- Tiles pulse briefly, at most once a second, when their result changes. The checkbox in the header
+  and the system reduced-motion setting turn the pulse off without hiding results.
+
+The display position is `50 + 50 x score`, where the score is the model's final result clamped to
+-1 to 1. Squares are rounded symmetrically around 50, so scores of +0.25 and -0.25 show 63 and 37
+squares. Machine-roundoff-sized half-block errors and cancellation residue are corrected
+only in presentation; the underlying model result remains unchanged. A real response smaller
+than one square still shows its signed score, using scientific notation rather than a false zero
+when necessary.
+
+## What moves what
+
+The relationships are one-way. An input moves the indicators downstream of it and never the ones
+upstream. Eight indicators have no outgoing relationship, so moving their input changes only their
+own tile: `debt_growth_rate`, `food_insecurity`, `hate_crimes`, `homelessness`,
+`institutional_confidence`, `net_interest`, `payrolls_headline` and `savings_rate`. They still
+respond when other indicators move, except `hate_crimes`, which has no relationships at all, on
+purpose. Every tile states what it directly drives. Adding a relationship is a change to the model
+and follows the rules in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Status
 
 Early. Built and tested: the data model and its validator, a graph with cited starting values, the
-propagation logic, the repository's automated checks, and the first browser interface with the graph,
-lever controls, and scenario-link loading. Browser-level visual and accessibility regression checks
-are not built yet, and deployment is not built. [DEPLOYMENT.md](DEPLOYMENT.md) records the deployment
-plan.
+propagation logic, the Block Board interface, real-Chrome browser tests, and the repository's
+automated checks. No automated accessibility conformance scan runs yet. [DEPLOYMENT.md](DEPLOYMENT.md)
+records the hosting decision and steps, and [TESTING.md](TESTING.md) records what each check does and
+does not establish.
 
 ## How to read the labels: empirical and modeled
 
@@ -102,10 +135,12 @@ npm run dev
 ```
 
 `npm run verify` runs the same checks as continuous integration: lint, type check, format check,
-tests with a 100 percent coverage threshold for the core model plus the pure UI helpers, a production
-build, the script tests, and the emoji check. Continuous integration also audits dependencies. Use
+tests with a 100 percent coverage threshold for the core model plus the pure display helpers, a
+production build, the script tests, the emoji check, and the independent numerical audit
+(`npm run test:math`). Continuous integration also runs
+`npm run test:e2e`, which drives the built board in real Chrome, and audits dependencies. Use
 `npm run dev` for the local Vite server, `npm run build` for the static production bundle, and
-`npm run preview` to serve that bundle locally.
+`npm run preview` to serve that bundle locally. [TESTING.md](TESTING.md) has the details.
 
 ## Contributing, license and deployment
 
@@ -113,3 +148,5 @@ build, the script tests, and the emoji check. Continuous integration also audits
   or an arrow, including the requirement to keep empirical and modeled apart.
 - [LICENSE](LICENSE) is the MIT license.
 - [DEPLOYMENT.md](DEPLOYMENT.md) records the hosting decision and the manual steps.
+- [TESTING.md](TESTING.md) and [SECURITY.md](SECURITY.md) describe verification and how to report a
+  vulnerability.

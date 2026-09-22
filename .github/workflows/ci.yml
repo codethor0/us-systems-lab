@@ -60,6 +60,20 @@ jobs:
         run: npm run check:emoji
 
       - name: Run production browser verification
+        # GitHub-hosted Linux runners cannot create Chrome's sandbox namespaces inside
+        # their container; --no-sandbox is the standard, documented mitigation for CI
+        # only. The headless browser still only ever loads the local preview server.
+        env:
+          USL_CHROME_NO_SANDBOX: "1"
+          USL_E2E_ARTIFACTS: ${{ github.workspace }}/e2e-artifacts
         run: npm run test:e2e
+
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-artifacts
+          path: e2e-artifacts
+          retention-days: 5
       - name: Audit dependencies
         run: npm audit --audit-level=low

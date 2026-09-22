@@ -70,10 +70,11 @@ describe("third-party actions", () => {
     .map((line) => /^\s*(?:-\s+)?uses:\s*(\S+)/.exec(line)?.[1])
     .filter((ref): ref is string => ref !== undefined);
 
-  it("uses at least the checkout and setup-node actions", () => {
+  it("uses at least the checkout, setup-node, and upload-artifact actions", () => {
     expect(references.map((ref) => ref.split("@")[0]).sort()).toEqual([
       "actions/checkout",
       "actions/setup-node",
+      "actions/upload-artifact",
     ]);
   });
 
@@ -83,7 +84,7 @@ describe("third-party actions", () => {
 
   it("keeps the human-readable version beside each SHA as a comment", () => {
     const usesLines = lines().filter((line) => /^\s*(?:-\s+)?uses:/.test(line));
-    expect(usesLines).toHaveLength(2);
+    expect(usesLines).toHaveLength(3);
     for (const line of usesLines) expect(line).toMatch(/@[0-9a-f]{40} # v\d+\.\d+\.\d+$/);
   });
 });
