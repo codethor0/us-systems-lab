@@ -28,7 +28,14 @@ const TEXT_EXTENSIONS = new Set([
   ".html",
 ]);
 const TEXT_NAMES = new Set(["LICENSE", ".nvmrc", ".gitignore", ".prettierrc", ".prettierignore"]);
-const SKIPPED_DIRECTORIES = new Set(["node_modules", ".git", "coverage", "dist", ".wrangler"]);
+const SKIPPED_DIRECTORIES = new Set([
+  "node_modules",
+  ".git",
+  "coverage",
+  "dist",
+  ".wrangler",
+  ".artifacts",
+]);
 
 /** Offsets of bytes that are control characters other than tab, newline and carriage return. */
 function controlByteOffsets(bytes: Uint8Array): number[] {

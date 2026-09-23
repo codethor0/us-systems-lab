@@ -1,7 +1,6 @@
 /**
  * Reproducible numerical audit. Temporary compilation never modifies repository source.
- * Developer and CI tooling only; never ships in the built application. USL_MATH_ARTIFACTS
- * below is set only by the same person or CI job invoking npm run test:math.
+ * Developer and CI tooling only; never ships in the built application.
  */
 import { promises as fs } from "node:fs";
 import os from "node:os";
@@ -11,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
 import { exactOracle } from "./block-oracle.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const reportDirectory = path.join(root, ".artifacts", "math");
 const graph = JSON.parse(await fs.readFile(path.join(root, "src/data/graph.json"), "utf8"));
 const expect = exactOracle(graph),
   ids = graph.nodes.map((n) => n.id).sort();
@@ -159,12 +159,10 @@ try {
   console.error(report.error);
   process.exitCode = 1;
 } finally {
-  if (process.env.USL_MATH_ARTIFACTS) {
-    // codeql[js/path-injection]: USL_MATH_ARTIFACTS is caller-supplied CLI/CI
-    // configuration; see the file header.
-    await fs.mkdir(process.env.USL_MATH_ARTIFACTS, { recursive: true });
+  if (process.env.USL_MATH_REPORT === "1") {
+    await fs.mkdir(reportDirectory, { recursive: true });
     await fs.writeFile(
-      path.join(process.env.USL_MATH_ARTIFACTS, "model-audit.json"),
+      path.join(reportDirectory, "model-audit.json"),
       JSON.stringify(report, null, 2) + "\n",
     );
   }

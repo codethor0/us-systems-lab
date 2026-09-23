@@ -1,20 +1,22 @@
 /**
  * Local browser-automation harness for the Block Board e2e suite.
  *
- * TRUST MODEL, for the CodeQL findings this file draws: it is developer and CI tooling
- * only. It never ships in the built application (only files under src/ and public/ reach
- * dist/) and it never runs in response to any network request. Every value this file
- * treats as "environment input" (CHROME_PATH, USL_E2E_URL, the artifacts directory) is
- * set only by the same person or CI job invoking npm run test:e2e, never by a remote
- * caller. child_process.spawn is always called with an argument array and without
- * shell: true, so it does not go through a shell and is not subject to shell metacharacter
- * injection regardless of the executable path's content.
+ * Developer and CI tooling only; it never ships in the built application. Filesystem
+ * output stays under the repository-owned ignored artifact directory, Chrome is selected
+ * only from fixed system paths, and remote verification can target only the canonical
+ * production origin. Runtime values cross the DevTools boundary as protocol arguments
+ * rather than being interpolated into generated JavaScript.
  */
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import net from "node:net";
 import path from "node:path";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
+
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const artifacts = path.join(projectRoot, ".artifacts", "e2e");
+const PRODUCTION_URL = "https://us-systems-lab.codethor0.workers.dev/";
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export function requireCheck(condition, message) {
@@ -67,6 +69,32 @@ class CDP {
       throw new Error(`Browser evaluation failed: ${JSON.stringify(result.exceptionDetails)}`);
     return result.result?.value;
   }
+  async call(functionDeclaration, ...values) {
+    const holder = await this.send("Runtime.evaluate", {
+      expression: "document",
+      returnByValue: false,
+    });
+    const objectId = holder.result?.objectId;
+    requireCheck(objectId, "Browser document unavailable");
+    try {
+      const result = await this.send("Runtime.callFunctionOn", {
+        objectId,
+        functionDeclaration,
+        arguments: values.map((value) => ({ value })),
+        awaitPromise: true,
+        returnByValue: true,
+      });
+      if (result.exceptionDetails)
+        throw new Error(`Browser call failed: ${JSON.stringify(result.exceptionDetails)}`);
+      return result.result?.value;
+    } finally {
+      try {
+        await this.send("Runtime.releaseObject", { objectId });
+      } catch {
+        /* Navigation may release the object first. */
+      }
+    }
+  }
   async wait(expression, description, timeout = 8000) {
     const end = Date.now() + timeout;
     while (Date.now() < end) {
@@ -76,17 +104,15 @@ class CDP {
     throw new Error(`Timed out: ${description}`);
   }
   async click(selector) {
-    await this.evaluate(
-      `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({block:'center',inline:'nearest'})`,
+    await this.call(
+      "function(selector){this.querySelector(selector)?.scrollIntoView({block:'center',inline:'nearest'});}",
+      selector,
     );
     await sleep(70);
-    // codeql[js/bad-code-sanitization]: JSON.stringify is a correct JS-string-literal
-    // sanitizer for embedding into a CDP Runtime.evaluate expression; CodeQL does not
-    // model that sink. selector is always a literal CSS selector this file wrote itself.
-    const point = await this
-      .evaluate(`(() => { const el=document.querySelector(${JSON.stringify(selector)}); if(!el)return null;
-      const r=el.getBoundingClientRect(); const x=r.left+r.width/2,y=r.top+r.height/2;
-      return {x,y,width:r.width,height:r.height,hit:el.contains(document.elementFromPoint(x,y)),disabled:el.disabled===true}; })()`);
+    const point = await this.call(
+      "function(selector){const el=this.querySelector(selector);if(!el)return null;const r=el.getBoundingClientRect();const x=r.left+r.width/2,y=r.top+r.height/2;return {x,y,width:r.width,height:r.height,hit:el.contains(this.elementFromPoint(x,y)),disabled:el.disabled===true};}",
+      selector,
+    );
     requireCheck(
       point?.hit && point.width > 0 && point.height > 0 && !point.disabled,
       `Unusable pointer target: ${selector} ${JSON.stringify(point)}`,
@@ -110,10 +136,10 @@ class CDP {
   }
   async button(name) {
     const token = `block-test-target-${++this.id}`;
-    // codeql[js/bad-code-sanitization]: same JSON.stringify sanitizer as above; name is a
-    // literal button label this file wrote itself, never external input.
-    const found = await this.evaluate(
-      `(() => {const el=[...document.querySelectorAll('button')].find(el=>el.textContent.trim()===${JSON.stringify(name)} && el.getBoundingClientRect().height>0); if(!el)return false;el.setAttribute('data-probe',${JSON.stringify(token)});return true;})()`,
+    const found = await this.call(
+      "function(name,token){const el=[...this.querySelectorAll('button')].find((el)=>el.textContent.trim()===name&&el.getBoundingClientRect().height>0);if(!el)return false;el.setAttribute('data-probe',token);return true;}",
+      name,
+      token,
     );
     requireCheck(found, `Button unavailable: ${name}`);
     await this.click(`[data-probe="${token}"]`);
@@ -145,18 +171,19 @@ class CDP {
   }
   async select(selector, value) {
     // Selection is through the native control's keyboard path, not React internals.
-    // codeql[js/bad-code-sanitization]: same JSON.stringify sanitizer as above; selector
-    // and value are literal strings this file wrote itself.
-    const index = await this.evaluate(
-      `(() => {const el=document.querySelector(${JSON.stringify(selector)});if(!el)return -1;el.focus();return [...el.options].findIndex(o=>o.value===${JSON.stringify(value)});})()`,
+    const index = await this.call(
+      "function(selector,value){const el=this.querySelector(selector);if(!el)return -1;el.focus();return [...el.options].findIndex((option)=>option.value===value);}",
+      selector,
+      value,
     );
     requireCheck(index >= 0, `Option missing: ${selector} ${value}`);
     await this.key("Home");
     for (let i = 0; i < index; i++) await this.key("ArrowDown");
     await this.key("Enter");
     await sleep(100);
-    const selected = await this.evaluate(
-      `document.querySelector(${JSON.stringify(selector)})?.value`,
+    const selected = await this.call(
+      "function(selector){return this.querySelector(selector)?.value;}",
+      selector,
     );
     requireCheck(selected === value, `Native select did not choose ${value}: ${selected}`);
   }
@@ -202,8 +229,8 @@ async function fetchTimed(url, init = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
-    // codeql[js/request-forgery]: see the callers, both above and at this function's two
-    // call sites in this file.
+    // Targets are loopback URLs built from locally allocated ports or the fixed
+    // PRODUCTION_URL constant; no caller-provided URL reaches fetch().
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
@@ -224,16 +251,17 @@ async function freePort() {
     });
   });
 }
-export async function startBrowser(root, artifacts) {
+export async function startBrowser() {
+  const root = projectRoot;
+  await fs.rm(artifacts, { recursive: true, force: true });
   await fs.mkdir(artifacts, { recursive: true });
   const candidates = [
-    process.env.CHROME_PATH,
     "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
     "/Applications/Chromium.app/Contents/MacOS/Chromium",
     "/usr/bin/google-chrome",
     "/usr/bin/chromium",
     "/usr/bin/chromium-browser",
-  ].filter(Boolean);
+  ];
   let chrome;
   for (const candidate of candidates) {
     try {
@@ -244,8 +272,8 @@ export async function startBrowser(root, artifacts) {
       /* Try next known installation. */
     }
   }
-  requireCheck(chrome, "Chrome/Chromium is missing. Set CHROME_PATH.");
-  let preview, browser, cdp;
+  requireCheck(chrome, "Chrome/Chromium is missing from the supported system paths.");
+  let preview, browser, cdp, profile;
   const handles = [];
   const failures = { exceptions: [], console: [], network: [], http: [], history: [] };
   const close = async () => {
@@ -254,25 +282,13 @@ export async function startBrowser(root, artifacts) {
     await stop(preview);
     for (const handle of handles) await handle.close();
     handles.length = 0;
+    if (profile) await fs.rm(profile, { recursive: true, force: true });
   };
   try {
-    const port = await freePort();
-    // The value actually used below (`base`) is always re-derived from a URL object this
-    // process constructed and validated, never the raw environment string: either the
-    // fixed loopback template, or target.href after the protocol/host check passes.
-    let base = `http://127.0.0.1:${port}`;
-    if (process.env.USL_E2E_URL) {
-      const target = new URL(process.env.USL_E2E_URL);
-      requireCheck(
-        target.protocol === "https:" ||
-          (target.protocol === "http:" && target.hostname === "127.0.0.1"),
-        "Only HTTPS or explicit loopback targets are allowed",
-      );
-      base = target.href;
-    }
-    if (!process.env.USL_E2E_URL) {
-      // codeql[js/path-injection]: artifacts is caller-supplied CLI/CI configuration, not
-      // externally reachable input; see the file header.
+    const production = process.env.USL_E2E_PRODUCTION === "1";
+    const port = production ? null : await freePort();
+    const base = production ? PRODUCTION_URL : `http://127.0.0.1:${port}`;
+    if (!production) {
       const out = await fs.open(path.join(artifacts, "preview.log"), "w");
       handles.push(out);
       preview = spawn(
@@ -298,14 +314,9 @@ export async function startBrowser(root, artifacts) {
       }
       requireCheck(ready, "Preview server did not start");
     }
-    // codeql[js/path-injection]: artifacts is set only by the caller of this CLI tool
-    // (npm run test:e2e, locally or in CI), documented in the file header above.
-    const profile = await fs.mkdtemp(path.join(artifacts, "chrome-"));
+    profile = await fs.mkdtemp(path.join(artifacts, "chrome-"));
     const output = await fs.open(path.join(artifacts, "chrome.log"), "w");
     handles.push(output);
-    // codeql[js/command-line-injection]: spawn() is called with an argument array and no
-    // shell:true (see file header), so it is not subject to shell injection. chrome was
-    // already confirmed to be a path that exists on disk by the fs.access loop above.
     browser = spawn(
       chrome,
       [
@@ -415,7 +426,7 @@ export async function startBrowser(root, artifacts) {
       );
       await sleep(250);
     };
-    return { cdp, base, failures, viewport, navigate, close };
+    return { cdp, base, failures, viewport, navigate, close, artifacts, production };
   } catch (error) {
     await close();
     throw error;

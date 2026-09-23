@@ -62,12 +62,16 @@ available for rollback. After publication, verify the displayed Block Board buil
 identifier and the served HTML, JavaScript, CSS, and favicon against the approved
 build. An old open preview tab is not production verification.
 
-Run the same browser contract against the real HTTPS address from the verified
-checkout; replace the target below with the approved deployment address:
+Run the same browser contract against the canonical production HTTPS address from the
+verified checkout:
 
 ```sh
-USL_E2E_URL="https://your-approved-worker.workers.dev" npm run test:e2e
+USL_E2E_PRODUCTION=1 npm run test:e2e
 ```
+
+The production switch does not accept a URL. The browser harness maps it to the canonical
+US Systems Lab production origin, so the verifier cannot be redirected to an arbitrary
+network target.
 
 Check the root document and representative static assets for HTTP success and the
 security headers declared in `public/_headers`, including the content security

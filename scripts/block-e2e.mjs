@@ -1,7 +1,6 @@
 /**
  * Local/CI e2e driver for the Block Board. Developer and CI tooling only; it never ships
- * in the built application and never runs in response to a network request. USL_E2E_ARTIFACTS
- * below is set only by the same person or CI job invoking npm run test:e2e.
+ * in the built application and never runs in response to a network request.
  */
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -11,10 +10,6 @@ import { startBrowser, requireCheck, sleep } from "./block-browser.mjs";
 import { exactOracle } from "./block-oracle.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const artifacts = path.resolve(
-  process.env.USL_E2E_ARTIFACTS ??
-    path.join(process.env.TMPDIR ?? "/tmp", `block-board-${Date.now()}`),
-);
 const graph = JSON.parse(await fs.readFile(path.join(root, "src/data/graph.json"), "utf8"));
 const params = await fs.readFile(path.join(root, "src/lib/propagation.ts"), "utf8");
 requireCheck(
@@ -30,8 +25,8 @@ const expectedBuild = /BLOCK_BUILD\s*=\s*["']([^"']+)/.exec(
 )?.[1];
 requireCheck(expectedBuild, "Missing expected build identifier");
 const expectedScenario = exactOracle(graph);
-const session = await startBrowser(root, artifacts);
-const { cdp } = session;
+const session = await startBrowser();
+const { cdp, artifacts } = session;
 const report = {
   status: "RUNNING",
   cases: [],
@@ -39,8 +34,8 @@ const report = {
   viewports: [],
   assertions: [],
   target: session.base,
-  // True only when this run drove a real remote deployment (USL_E2E_URL) rather than a
-  // vite preview of the local build. Assigned once at the very end; still false on a
+  // True only when this run used the fixed canonical production target rather than a
+  // Vite preview of the local build. Assigned once at the very end; still false on a
   // crash, so a partial report never claims a production run it did not complete.
   productionVerified: false,
 };
@@ -595,7 +590,7 @@ async function run() {
   );
   report.status = "PASS";
   report.failures = failures;
-  report.productionVerified = Boolean(process.env.USL_E2E_URL);
+  report.productionVerified = session.production;
 }
 try {
   await Promise.race([
@@ -629,8 +624,6 @@ try {
   process.exitCode = 1;
 } finally {
   clearTimeout(timeout);
-  // codeql[js/path-injection]: artifacts is caller-supplied CLI/CI configuration; see the
-  // file header.
   await fs.writeFile(
     path.join(artifacts, "block-e2e-report.json"),
     JSON.stringify(report, null, 2) + "\n",

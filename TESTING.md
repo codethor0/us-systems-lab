@@ -49,8 +49,8 @@ implemented exact-rational path enumeration. It covers 420 single-input grid sce
 indicator comparisons). It checks raw and clamped results, whole-block rounding, displayed
 direction and color (including cancellation roundoff), input-order
 independence, and a deliberately reversed propagation sign in a temporary compiled copy.
-No production model source is mutated. Set `USL_MATH_ARTIFACTS` to an external directory
-for its machine-readable report.
+No production model source is mutated. Set `USL_MATH_REPORT=1` to write its
+machine-readable report to the fixed ignored path `.artifacts/math/model-audit.json`.
 
 The browser suite additionally exercises all 420 single-input grid positions at desktop
 width, beyond its 120 signed viewport cases. It checks the actual automatic bar width,
