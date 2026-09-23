@@ -194,10 +194,16 @@ async function stop(child) {
     }
   }
 }
+// Both of fetchTimed's callers pass a value already known safe at the call site: either a
+// URL checked above (HTTPS, or explicit loopback) via target.href, the fixed loopback
+// template built from a port this process allocated itself, or a debugger URL built from
+// a port Chromium itself reported after this process spawned it.
 async function fetchTimed(url, init = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
+    // codeql[js/request-forgery]: see the callers, both above and at this function's two
+    // call sites in this file.
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
@@ -278,9 +284,6 @@ export async function startBrowser(root, artifacts) {
       let ready = false;
       for (let i = 0; i < 70; i++) {
         try {
-          // codeql[js/request-forgery]: base is either the fixed loopback template, or
-          // target.href from a URL already checked above to be HTTPS or explicit
-          // loopback; the requireCheck two lines up is the actual barrier.
           const response = await fetchTimed(base);
           if (response.ok) {
             ready = true;
