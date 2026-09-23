@@ -91,11 +91,12 @@
   border: 1px solid #cdd2da;
   background: white;
   padding: 10px 16px;
-  border-radius: 7px;
+  border-radius: 8px;
   color: #263342;
   cursor: pointer;
   font: inherit;
   min-height: 44px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
 .bb-button:hover,
 .bb-neutral:hover {
@@ -183,11 +184,14 @@
 .bb-card {
   --bb-fill: #c84040;
   background: white;
-  border: 1px solid #d9dfe6;
+  border: 1px solid #e3e7ec;
   border-top: 3px solid var(--bb-fill);
-  border-radius: 9px;
+  border-radius: 12px;
   padding: 16px;
   min-width: 0;
+  box-shadow:
+    0 1px 2px rgba(16, 24, 40, 0.06),
+    0 4px 12px rgba(16, 24, 40, 0.08);
 }
 .bb-category {
   margin: 0 0 4px;
@@ -383,7 +387,9 @@
   gap: 10px;
   padding: 14px;
   border: 1px solid #cdd8e4;
+  border-radius: 10px;
   background: white;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
   margin-bottom: 15px;
 }
 .bb-share input {
