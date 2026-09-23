@@ -39,6 +39,9 @@ const report = {
   viewports: [],
   assertions: [],
   target: session.base,
+  // True only when this run drove a real remote deployment (USL_E2E_URL) rather than a
+  // vite preview of the local build. Assigned once at the very end; still false on a
+  // crash, so a partial report never claims a production run it did not complete.
   productionVerified: false,
 };
 let timeout;
@@ -592,6 +595,7 @@ async function run() {
   );
   report.status = "PASS";
   report.failures = failures;
+  report.productionVerified = Boolean(process.env.USL_E2E_URL);
 }
 try {
   await Promise.race([
