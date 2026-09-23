@@ -1,4 +1,8 @@
-/** Reproducible numerical audit. Temporary compilation never modifies repository source. */
+/**
+ * Reproducible numerical audit. Temporary compilation never modifies repository source.
+ * Developer and CI tooling only; never ships in the built application. USL_MATH_ARTIFACTS
+ * below is set only by the same person or CI job invoking npm run test:math.
+ */
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -156,6 +160,8 @@ try {
   process.exitCode = 1;
 } finally {
   if (process.env.USL_MATH_ARTIFACTS) {
+    // codeql[js/path-injection]: USL_MATH_ARTIFACTS is caller-supplied CLI/CI
+    // configuration; see the file header.
     await fs.mkdir(process.env.USL_MATH_ARTIFACTS, { recursive: true });
     await fs.writeFile(
       path.join(process.env.USL_MATH_ARTIFACTS, "model-audit.json"),
