@@ -1,3 +1,15 @@
+/**
+ * Local browser-automation harness for the Block Board e2e suite.
+ *
+ * TRUST MODEL, for the CodeQL findings this file draws: it is developer and CI tooling
+ * only. It never ships in the built application (only files under src/ and public/ reach
+ * dist/) and it never runs in response to any network request. Every value this file
+ * treats as "environment input" (CHROME_PATH, USL_E2E_URL, the artifacts directory) is
+ * set only by the same person or CI job invoking npm run test:e2e, never by a remote
+ * caller. child_process.spawn is always called with an argument array and without
+ * shell: true, so it does not go through a shell and is not subject to shell metacharacter
+ * injection regardless of the executable path's content.
+ */
 import { spawn } from "node:child_process";
 import { promises as fs } from "node:fs";
 import net from "node:net";
@@ -68,6 +80,9 @@ class CDP {
       `document.querySelector(${JSON.stringify(selector)})?.scrollIntoView({block:'center',inline:'nearest'})`,
     );
     await sleep(70);
+    // codeql[js/bad-code-sanitization]: JSON.stringify is a correct JS-string-literal
+    // sanitizer for embedding into a CDP Runtime.evaluate expression; CodeQL does not
+    // model that sink. selector is always a literal CSS selector this file wrote itself.
     const point = await this
       .evaluate(`(() => { const el=document.querySelector(${JSON.stringify(selector)}); if(!el)return null;
       const r=el.getBoundingClientRect(); const x=r.left+r.width/2,y=r.top+r.height/2;
@@ -95,6 +110,8 @@ class CDP {
   }
   async button(name) {
     const token = `block-test-target-${++this.id}`;
+    // codeql[js/bad-code-sanitization]: same JSON.stringify sanitizer as above; name is a
+    // literal button label this file wrote itself, never external input.
     const found = await this.evaluate(
       `(() => {const el=[...document.querySelectorAll('button')].find(el=>el.textContent.trim()===${JSON.stringify(name)} && el.getBoundingClientRect().height>0); if(!el)return false;el.setAttribute('data-probe',${JSON.stringify(token)});return true;})()`,
     );
@@ -128,6 +145,8 @@ class CDP {
   }
   async select(selector, value) {
     // Selection is through the native control's keyboard path, not React internals.
+    // codeql[js/bad-code-sanitization]: same JSON.stringify sanitizer as above; selector
+    // and value are literal strings this file wrote itself.
     const index = await this.evaluate(
       `(() => {const el=document.querySelector(${JSON.stringify(selector)});if(!el)return -1;el.focus();return [...el.options].findIndex(o=>o.value===${JSON.stringify(value)});})()`,
     );
@@ -175,10 +194,16 @@ async function stop(child) {
     }
   }
 }
+// Both of fetchTimed's callers pass a value already known safe at the call site: either a
+// URL checked above (HTTPS, or explicit loopback) via target.href, the fixed loopback
+// template built from a port this process allocated itself, or a debugger URL built from
+// a port Chromium itself reported after this process spawned it.
 async function fetchTimed(url, init = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 3000);
   try {
+    // codeql[js/request-forgery]: see the callers, both above and at this function's two
+    // call sites in this file.
     return await fetch(url, { ...init, signal: controller.signal });
   } finally {
     clearTimeout(timer);
@@ -232,16 +257,22 @@ export async function startBrowser(root, artifacts) {
   };
   try {
     const port = await freePort();
-    const base = process.env.USL_E2E_URL ?? `http://127.0.0.1:${port}`;
+    // The value actually used below (`base`) is always re-derived from a URL object this
+    // process constructed and validated, never the raw environment string: either the
+    // fixed loopback template, or target.href after the protocol/host check passes.
+    let base = `http://127.0.0.1:${port}`;
     if (process.env.USL_E2E_URL) {
-      const target = new URL(base);
+      const target = new URL(process.env.USL_E2E_URL);
       requireCheck(
         target.protocol === "https:" ||
           (target.protocol === "http:" && target.hostname === "127.0.0.1"),
         "Only HTTPS or explicit loopback targets are allowed",
       );
+      base = target.href;
     }
     if (!process.env.USL_E2E_URL) {
+      // codeql[js/path-injection]: artifacts is caller-supplied CLI/CI configuration, not
+      // externally reachable input; see the file header.
       const out = await fs.open(path.join(artifacts, "preview.log"), "w");
       handles.push(out);
       preview = spawn(
@@ -267,9 +298,14 @@ export async function startBrowser(root, artifacts) {
       }
       requireCheck(ready, "Preview server did not start");
     }
+    // codeql[js/path-injection]: artifacts is set only by the caller of this CLI tool
+    // (npm run test:e2e, locally or in CI), documented in the file header above.
     const profile = await fs.mkdtemp(path.join(artifacts, "chrome-"));
     const output = await fs.open(path.join(artifacts, "chrome.log"), "w");
     handles.push(output);
+    // codeql[js/command-line-injection]: spawn() is called with an argument array and no
+    // shell:true (see file header), so it is not subject to shell injection. chrome was
+    // already confirmed to be a path that exists on disk by the fs.access loop above.
     browser = spawn(
       chrome,
       [

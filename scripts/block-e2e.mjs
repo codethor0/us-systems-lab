@@ -1,3 +1,8 @@
+/**
+ * Local/CI e2e driver for the Block Board. Developer and CI tooling only; it never ships
+ * in the built application and never runs in response to a network request. USL_E2E_ARTIFACTS
+ * below is set only by the same person or CI job invoking npm run test:e2e.
+ */
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import process from "node:process";
@@ -620,6 +625,8 @@ try {
   process.exitCode = 1;
 } finally {
   clearTimeout(timeout);
+  // codeql[js/path-injection]: artifacts is caller-supplied CLI/CI configuration; see the
+  // file header.
   await fs.writeFile(
     path.join(artifacts, "block-e2e-report.json"),
     JSON.stringify(report, null, 2) + "\n",
