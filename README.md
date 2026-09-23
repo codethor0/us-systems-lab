@@ -1,5 +1,7 @@
 # US Systems Lab
 
+**[Try it live](https://us-systems-lab.codethor0.workers.dev/)** — no install, no signup.
+
 An interactive block board of U.S. economic and social indicators. Each indicator is a tile of 100
 squares. Move one input and watch the tiles it is connected to gain or lose squares and change color.
 
