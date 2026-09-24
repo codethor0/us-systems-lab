@@ -23,6 +23,51 @@ export function normalizeLeversForUi(levers: ReadonlyMap<string, number>): Map<s
   return normalized;
 }
 
+/** A lever a link set between input steps, and the value the board applied instead. */
+export interface LeverAdjustment {
+  readonly id: string;
+  /** The whole percent the link asked for, from -100 to 100. */
+  readonly requested: number;
+  /** The whole percent applied after snapping to the input grid; 0 means the input was cleared. */
+  readonly applied: number;
+}
+
+/**
+ * Every lever whose value changed when it was snapped onto the input grid, in the order the link
+ * listed them. The snap itself is unchanged; this only makes it visible to the person who opened
+ * the link, so a shared scenario is never silently different from the one that was sent.
+ */
+export function leverAdjustments(
+  requested: ReadonlyMap<string, number>,
+  applied: ReadonlyMap<string, number>,
+): LeverAdjustment[] {
+  const adjustments: LeverAdjustment[] = [];
+  for (const [id, value] of requested) {
+    const from = Math.round(value * 100);
+    const to = Math.round((applied.get(id) ?? 0) * 100);
+    if (from !== to) adjustments.push({ id, requested: from, applied: to });
+  }
+  return adjustments;
+}
+
+/** A lever percent as the 0..100 input position the person sees on the slider. */
+function inputPosition(percent: number): string {
+  return String(50 + percent / 2);
+}
+
+/** One notice sentence naming every rounded input, with the requested and the applied position. */
+export function adjustmentMessage(
+  adjustments: readonly LeverAdjustment[],
+  labels: ReadonlyMap<string, string>,
+): string {
+  const items = adjustments.map((item) => {
+    const neutral = item.applied === 0 ? " (neutral)" : "";
+    return `${labels.get(item.id) ?? item.id} ${inputPosition(item.requested)}/100 to ${inputPosition(item.applied)}/100${neutral}`;
+  });
+  const one = adjustments.length === 1;
+  return `This link has ${one ? "a value" : "values"} between the input steps of 5, so ${one ? "it was" : "they were"} rounded: ${items.join("; ")}.`;
+}
+
 export function scenarioLocation(
   pathname: string,
   hash: string,

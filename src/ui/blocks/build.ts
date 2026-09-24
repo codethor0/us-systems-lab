@@ -1,1 +1,1 @@
-export const BLOCK_BUILD = "bb-rc2-review-fixes-20260921";
+export const BLOCK_BUILD = "bb-share-rounding-notice-20260923";
