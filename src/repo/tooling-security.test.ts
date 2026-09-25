@@ -9,6 +9,7 @@ const gitignore = readFileSync(".gitignore", "utf8");
 const deployment = readFileSync("DEPLOYMENT.md", "utf8");
 const testing = readFileSync("TESTING.md", "utf8");
 const hygiene = readFileSync("src/repo/source-hygiene.test.ts", "utf8");
+const emoji = readFileSync("scripts/check-no-emoji.py", "utf8");
 
 describe("developer tooling security boundaries", () => {
   it("does not read executable, target, or artifact paths from environment variables", () => {
@@ -41,6 +42,17 @@ describe("developer tooling security boundaries", () => {
     expect(workflow).toContain("include-hidden-files: true");
     expect(hygiene).toContain('".artifacts"');
     expect(testing).toContain("USL_MATH_REPORT=1");
+  });
+
+  it("keeps every repository scanner out of the local artifact directory", () => {
+    expect(emoji).toMatch(/SKIP_DIRS = frozenset\(\{[^}]*"\.artifacts"[^}]*\}\)/);
+    expect(hygiene).toContain('".artifacts"');
+  });
+
+  it("retries a slow Chrome start instead of failing on the first slow runner", () => {
+    expect(browser).toContain("const CHROME_START_ATTEMPTS = 2;");
+    expect(browser).toContain("const CHROME_START_TIMEOUT_MS = 30000;");
+    expect(browser).not.toContain('requireCheck(debugPort, "Chrome DevTools did not start");');
   });
 
   it("does not suppress data-flow findings with inline CodeQL directives", () => {

@@ -17,6 +17,9 @@ import { fileURLToPath } from "node:url";
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const artifacts = path.join(projectRoot, ".artifacts", "e2e");
 const PRODUCTION_URL = "https://us-systems-lab.codethor0.workers.dev/";
+// A cold CI runner can take longer than ten seconds to report its DevTools port.
+const CHROME_START_ATTEMPTS = 2;
+const CHROME_START_TIMEOUT_MS = 30000;
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export function requireCheck(condition, message) {
@@ -314,44 +317,53 @@ export async function startBrowser() {
       }
       requireCheck(ready, "Preview server did not start");
     }
-    profile = await fs.mkdtemp(path.join(artifacts, "chrome-"));
-    const output = await fs.open(path.join(artifacts, "chrome.log"), "w");
-    handles.push(output);
-    browser = spawn(
-      chrome,
-      [
-        ...(process.env.USL_CHROME_NO_SANDBOX === "1"
-          ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
-          : []),
-        "--headless=new",
-        "--disable-gpu",
-        "--no-first-run",
-        "--no-default-browser-check",
-        "--disable-extensions",
-        "--disable-background-networking",
-        "--remote-debugging-address=127.0.0.1",
-        "--remote-debugging-port=0",
-        `--user-data-dir=${profile}`,
-        "about:blank",
-      ],
-      { detached: true, stdio: ["ignore", output.fd, output.fd] },
-    );
-    browser.on("error", (error) => failures.network.push({ error: error.message }));
+    // Each attempt gets a fresh profile, its own log, and CHROME_START_TIMEOUT_MS to report
+    // its port. A slow or exited Chrome is stopped and launched once more before failing.
     let debugPort;
-    for (let i = 0; i < 100; i++) {
-      try {
-        debugPort = Number(
-          (await fs.readFile(path.join(profile, "DevToolsActivePort"), "utf8")).split("\n")[0],
-        );
-        if (debugPort) break;
-      } catch {
-        /* Waiting for Chromium's own port file. */
+    for (let attempt = 1; attempt <= CHROME_START_ATTEMPTS && !debugPort; attempt++) {
+      await stop(browser);
+      if (profile) await fs.rm(profile, { recursive: true, force: true });
+      profile = await fs.mkdtemp(path.join(artifacts, "chrome-"));
+      const logName = attempt === 1 ? "chrome.log" : `chrome-attempt-${attempt}.log`;
+      const output = await fs.open(path.join(artifacts, logName), "w");
+      handles.push(output);
+      const launched = spawn(
+        chrome,
+        [
+          ...(process.env.USL_CHROME_NO_SANDBOX === "1"
+            ? ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"]
+            : []),
+          "--headless=new",
+          "--disable-gpu",
+          "--no-first-run",
+          "--no-default-browser-check",
+          "--disable-extensions",
+          "--disable-background-networking",
+          "--remote-debugging-address=127.0.0.1",
+          "--remote-debugging-port=0",
+          `--user-data-dir=${profile}`,
+          "about:blank",
+        ],
+        { detached: true, stdio: ["ignore", output.fd, output.fd] },
+      );
+      browser = launched;
+      launched.on("error", (error) => failures.network.push({ error: error.message }));
+      const portFile = path.join(profile, "DevToolsActivePort");
+      const deadline = Date.now() + CHROME_START_TIMEOUT_MS;
+      while (Date.now() < deadline && launched.exitCode === null && launched.signalCode === null) {
+        try {
+          debugPort = Number((await fs.readFile(portFile, "utf8")).split("\n")[0]);
+          if (debugPort) break;
+        } catch {
+          /* Waiting for Chromium's own port file. */
+        }
+        await sleep(100);
       }
-      if (browser.exitCode !== null)
-        throw new Error("Chrome exited during startup; see chrome.log");
-      await sleep(100);
     }
-    requireCheck(debugPort, "Chrome DevTools did not start");
+    requireCheck(
+      debugPort,
+      `Chrome DevTools did not start after ${CHROME_START_ATTEMPTS} attempts; see chrome*.log`,
+    );
     const response = await fetchTimed(`http://127.0.0.1:${debugPort}/json/new?about:blank`, {
       method: "PUT",
     });

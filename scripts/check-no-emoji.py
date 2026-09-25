@@ -55,7 +55,9 @@ RANGES = [
 ]
 
 # Directory names skipped at any depth. Matched exactly, so "distribution" is scanned.
-SKIP_DIRS = frozenset({"node_modules", ".git", "dist", "coverage", ".wrangler"})
+# .artifacts is ignored local test output (browser logs, screenshots, reports) written by
+# the repository's own tools; third-party log text there is not repository content.
+SKIP_DIRS = frozenset({"node_modules", ".git", "dist", "coverage", ".wrangler", ".artifacts"})
 
 # No range starts below this, so every earlier character is rejected without a lookup.
 LOWEST_FLAGGED = min(first for first, _, _ in RANGES)

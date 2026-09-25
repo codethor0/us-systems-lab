@@ -208,6 +208,22 @@ class ScanTree(unittest.TestCase):
         _, out, _ = run_main(self.root)
         self.assertIn("2 hits", out)
 
+    def test_skips_the_local_artifacts_directory_the_test_tools_write(self):
+        # Vite's preview log starts with an arrow in the dingbats range. A local browser run
+        # leaves it in .artifacts, and it must not fail the next local verify.
+        write(self.root, ".artifacts/e2e/preview.log", "  " + chr(0x279C) + "  Local:")
+        write(self.root, ".artifacts/math/report.json", chr(0x1F680))
+        write(self.root, "kept.md", "clean")
+        code, out, _ = run_main(self.root)
+        self.assertEqual(code, 0)
+        self.assertIn("scanned 1 files", out)
+
+    def test_a_directory_named_like_artifacts_but_not_exactly_is_still_scanned(self):
+        write(self.root, "docs/artifacts/notes.md", chr(0x1F680))
+        write(self.root, "src/.artifacts-notes/x.md", chr(0x1F680))
+        _, out, _ = run_main(self.root)
+        self.assertIn("2 hits", out)
+
     def test_does_not_follow_symlinks(self):
         with tempfile.TemporaryDirectory() as outside:
             target = write(outside, "secret.md", chr(0x1F680))
