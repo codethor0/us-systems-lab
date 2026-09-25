@@ -624,9 +624,14 @@ try {
   process.exitCode = 1;
 } finally {
   clearTimeout(timeout);
-  await fs.writeFile(
-    path.join(artifacts, "block-e2e-report.json"),
-    JSON.stringify(report, null, 2) + "\n",
-  );
-  await session.close();
+  // Close Chrome, Vite, and the run lock even if the report cannot be written; they are
+  // detached process groups and would otherwise outlive this process.
+  try {
+    await fs.writeFile(
+      path.join(artifacts, "block-e2e-report.json"),
+      JSON.stringify(report, null, 2) + "\n",
+    );
+  } finally {
+    await session.close();
+  }
 }

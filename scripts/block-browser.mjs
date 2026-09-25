@@ -20,6 +20,12 @@ const PRODUCTION_URL = "https://us-systems-lab.codethor0.workers.dev/";
 // A cold CI runner can take longer than ten seconds to report its DevTools port.
 const CHROME_START_ATTEMPTS = 2;
 const CHROME_START_TIMEOUT_MS = 30000;
+// A Chrome that has just reported its port can still take more than one 3 s request to
+// answer /json/new on a cold runner, so target creation retries until this deadline.
+const CHROME_TARGET_TIMEOUT_MS = 20000;
+// Held for the whole run, beside (not inside) the artifact directory that each run wipes,
+// so a second concurrent run stops instead of deleting the first run's live files.
+const runLock = path.join(projectRoot, ".artifacts", "e2e.lock");
 
 export const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 export function requireCheck(condition, message) {
@@ -254,8 +260,56 @@ async function freePort() {
     });
   });
 }
+function isRunning(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === "EPERM";
+  }
+}
+export async function acquireRunLock(lock = runLock) {
+  await fs.mkdir(path.dirname(lock), { recursive: true });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      await fs.writeFile(lock, `${process.pid}\n`, { flag: "wx" });
+      return async () => {
+        const owner = Number((await fs.readFile(lock, "utf8").catch(() => "")).trim());
+        if (owner === process.pid) await fs.rm(lock, { force: true });
+      };
+    } catch (error) {
+      if (error.code !== "EEXIST") throw error;
+    }
+    const owner = Number((await fs.readFile(lock, "utf8").catch(() => "")).trim());
+    requireCheck(
+      !(owner > 0 && isRunning(owner)),
+      `Another Block Board e2e run (PID ${owner}) is active; wait for it to finish.`,
+    );
+    // The recorded process has exited without releasing the lock: take it over once.
+    await fs.rm(lock, { force: true });
+  }
+  throw new Error(`Could not acquire ${lock}`);
+}
+export async function createTarget(debugPort, timeoutMs = CHROME_TARGET_TIMEOUT_MS) {
+  const deadline = Date.now() + timeoutMs;
+  let last = "no response";
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetchTimed(`http://127.0.0.1:${debugPort}/json/new?about:blank`, {
+        method: "PUT",
+      });
+      if (response.ok) return await response.json();
+      last = `HTTP ${response.status}`;
+    } catch (error) {
+      last = error instanceof Error ? `${error.name}: ${error.message}` : String(error);
+    }
+    await sleep(250);
+  }
+  throw new Error(`Cannot create a browser target within ${timeoutMs} ms (last: ${last})`);
+}
 export async function startBrowser() {
   const root = projectRoot;
+  const releaseLock = await acquireRunLock();
   await fs.rm(artifacts, { recursive: true, force: true });
   await fs.mkdir(artifacts, { recursive: true });
   const candidates = [
@@ -286,6 +340,7 @@ export async function startBrowser() {
     for (const handle of handles) await handle.close();
     handles.length = 0;
     if (profile) await fs.rm(profile, { recursive: true, force: true });
+    await releaseLock();
   };
   try {
     const production = process.env.USL_E2E_PRODUCTION === "1";
@@ -364,11 +419,7 @@ export async function startBrowser() {
       debugPort,
       `Chrome DevTools did not start after ${CHROME_START_ATTEMPTS} attempts; see chrome*.log`,
     );
-    const response = await fetchTimed(`http://127.0.0.1:${debugPort}/json/new?about:blank`, {
-      method: "PUT",
-    });
-    requireCheck(response.ok, "Cannot create browser target");
-    const target = await response.json();
+    const target = await createTarget(debugPort);
     const socket = new WebSocket(target.webSocketDebuggerUrl);
     await new Promise((resolve, reject) => {
       const timer = setTimeout(() => reject(new Error("Browser WebSocket startup timeout")), 8000);

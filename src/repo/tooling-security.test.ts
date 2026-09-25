@@ -55,6 +55,25 @@ describe("developer tooling security boundaries", () => {
     expect(browser).not.toContain('requireCheck(debugPort, "Chrome DevTools did not start");');
   });
 
+  it("retries browser target creation instead of failing on one 3 s request", () => {
+    expect(browser).toContain("const CHROME_TARGET_TIMEOUT_MS = 20000;");
+    expect(browser).toContain("const target = await createTarget(debugPort);");
+    expect(browser).not.toContain('requireCheck(response.ok, "Cannot create browser target");');
+  });
+
+  it("holds a run lock outside the wiped artifact directory for the whole run", () => {
+    expect(browser).toContain('const runLock = path.join(projectRoot, ".artifacts", "e2e.lock");');
+    expect(browser.indexOf("await acquireRunLock()")).toBeGreaterThan(-1);
+    expect(browser.indexOf("await acquireRunLock()")).toBeLessThan(
+      browser.indexOf("await fs.rm(artifacts, { recursive: true, force: true });"),
+    );
+    expect(browser).toContain("await releaseLock();");
+  });
+
+  it("closes the browser session even when the report cannot be written", () => {
+    expect(e2e).toMatch(/\} finally \{\s*await session\.close\(\);\s*\}\s*\}\s*$/);
+  });
+
   it("does not suppress data-flow findings with inline CodeQL directives", () => {
     for (const source of [browser, e2e, math]) expect(source).not.toContain("codeql[");
   });
