@@ -94,3 +94,22 @@ export function exactOracle(graph, maxHops = 3, decay = 0.7) {
 export function oracle(graph, entries, maxHops = 3, decay = 0.7) {
   return exactOracle(graph, maxHops, decay)(entries);
 }
+
+/**
+ * Expected tile colour, written separately from src/ui/blocks/view.ts: neutral grey
+ * (124, 132, 143) at 50, blending linearly to blue (59, 118, 200) at 0 or orange
+ * (194, 100, 15) at 100. Untouched tiles are the neutral grey.
+ */
+export function expectedFill(position, idle) {
+  const neutral = [124, 132, 143];
+  if (idle) return "#7c848f";
+  const target = position < 50 ? [59, 118, 200] : [194, 100, 15];
+  const share = Math.abs(position - 50) / 50;
+  return (
+    "#" +
+    neutral
+      .map((start, i) => Math.round(start + (target[i] - start) * share))
+      .map((value) => value.toString(16).padStart(2, "0"))
+      .join("")
+  );
+}

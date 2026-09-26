@@ -9,14 +9,71 @@
   --bb-text-2: #46566a;
   --bb-text-3: #5b697a;
   --bb-border-subtle: #dce2e8;
-  color: #19222d;
-  background: #f6f7f9;
+  /*
+   * Theme tokens. The dark values below replace these under prefers-color-scheme: dark.
+   * The tile fill scale (FILL_* in view.ts) is shared by both themes; --bb-card and
+   * --bb-empty are the surfaces it is contrast-checked against (src/repo/block-board.test.ts).
+   */
+  --bb-text: #19222d;
+  --bb-bg: #f6f7f9;
+  --bb-card: #ffffff;
+  --bb-hover: #edf1f5;
+  --bb-button-text: #263342;
+  --bb-disabled: #747f8e;
+  --bb-border-control: #cdd2da;
+  --bb-border-card: #e3e7ec;
+  --bb-border-input: #adbaca;
+  --bb-rule: #d9dfe6;
+  --bb-empty: #e9edf2;
+  --bb-track: #e7ecf1;
+  --bb-track-mid: #63758a;
+  --bb-link: #185b99;
+  --bb-focus: #1e65b5;
+  --bb-notice-bg: #fff5df;
+  --bb-notice-border: #d4b875;
+  --bb-notice-text: #704b18;
+  --bb-shadow: rgba(16, 24, 40, 0.06);
+  --bb-shadow-deep: rgba(16, 24, 40, 0.08);
+  --bb-fill-low: #3b76c8;
+  --bb-fill-neutral: #7c848f;
+  --bb-fill-high: #c2640f;
+  color-scheme: light;
+  color: var(--bb-text);
+  background: var(--bb-bg);
   min-height: 100vh;
   font:
     14px/1.5 system-ui,
     -apple-system,
     sans-serif;
   padding: 28px clamp(14px, 3vw, 40px) 20px;
+}
+@media (prefers-color-scheme: dark) {
+  .bb-app {
+    --bb-text-2: #aab6c4;
+    --bb-text-3: #97a4b3;
+    --bb-border-subtle: #2a323d;
+    --bb-text: #e6ebf1;
+    --bb-bg: #0e1217;
+    --bb-card: #151a21;
+    --bb-hover: #1f252e;
+    --bb-button-text: #e6ebf1;
+    --bb-disabled: #7d8896;
+    --bb-border-control: #3a4452;
+    --bb-border-card: #262e38;
+    --bb-border-input: #4a5666;
+    --bb-rule: #2a323d;
+    --bb-empty: #1f252e;
+    --bb-track: #232a34;
+    --bb-track-mid: #8391a2;
+    --bb-link: #7cb4ec;
+    --bb-focus: #6aa7ea;
+    --bb-notice-bg: #2b2313;
+    --bb-notice-border: #6b5629;
+    --bb-notice-text: #f0d49b;
+    --bb-shadow: rgba(0, 0, 0, 0.3);
+    --bb-shadow-deep: rgba(0, 0, 0, 0.35);
+    color-scheme: dark;
+  }
 }
 .bb-app * {
   box-sizing: border-box;
@@ -88,23 +145,23 @@
 }
 .bb-button,
 .bb-neutral {
-  border: 1px solid #cdd2da;
-  background: white;
+  border: 1px solid var(--bb-border-control);
+  background: var(--bb-card);
   padding: 10px 16px;
   border-radius: 8px;
-  color: #263342;
+  color: var(--bb-button-text);
   cursor: pointer;
   font: inherit;
   min-height: 44px;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+  box-shadow: 0 1px 2px var(--bb-shadow);
 }
 .bb-button:hover,
 .bb-neutral:hover {
-  background: #edf1f5;
+  background: var(--bb-hover);
 }
 .bb-button:disabled,
 .bb-neutral:disabled {
-  color: #747f8e;
+  color: var(--bb-disabled);
   cursor: default;
   opacity: 0.6;
 }
@@ -123,12 +180,12 @@
   accent-color: var(--bb-text-3);
 }
 .bb-app :focus-visible {
-  outline: 3px solid #1e65b5;
+  outline: 3px solid var(--bb-focus);
   outline-offset: 3px;
 }
 .bb-legend {
-  border-top: 1px solid #d9dfe6;
-  border-bottom: 1px solid #d9dfe6;
+  border-top: 1px solid var(--bb-rule);
+  border-bottom: 1px solid var(--bb-rule);
   padding: 12px 0;
   display: flex;
   justify-content: space-between;
@@ -153,7 +210,12 @@
   width: 100px;
   height: 8px;
   border-radius: 2px;
-  background: linear-gradient(to right, #b83232, #bc9e27, #20933a);
+  background: linear-gradient(
+    to right,
+    var(--bb-fill-low),
+    var(--bb-fill-neutral),
+    var(--bb-fill-high)
+  );
 }
 .bb-disclaimer {
   font-size: 11px;
@@ -182,16 +244,16 @@
   align-items: stretch;
 }
 .bb-card {
-  --bb-fill: #c84040;
-  background: white;
-  border: 1px solid #e3e7ec;
+  --bb-fill: var(--bb-fill-neutral);
+  background: var(--bb-card);
+  border: 1px solid var(--bb-border-card);
   border-top: 3px solid var(--bb-fill);
   border-radius: 12px;
   padding: 16px;
   min-width: 0;
   box-shadow:
-    0 1px 2px rgba(16, 24, 40, 0.06),
-    0 4px 12px rgba(16, 24, 40, 0.08);
+    0 1px 2px var(--bb-shadow),
+    0 4px 12px var(--bb-shadow-deep);
 }
 .bb-category {
   margin: 0 0 4px;
@@ -228,19 +290,15 @@
   touch-action: pan-y;
 }
 .bb-square {
-  border: 1px solid #edcccc;
+  border: 1px solid var(--bb-border-subtle);
   border-radius: 1px;
-  background: #fff7f7;
+  background: var(--bb-empty);
   min-width: 0;
   min-height: 0;
 }
 .bb-square.bb-filled {
   background: var(--bb-fill);
   border-color: var(--bb-fill);
-}
-.bb-card:not([data-state="idle"]) .bb-square:not(.bb-filled) {
-  border-color: var(--bb-border-subtle);
-  background: #f1f4f7;
 }
 .bb-result {
   flex: 1 1 0;
@@ -273,7 +331,7 @@
 }
 .bb-denominator {
   font-size: 11px;
-  color: #5b697a;
+  color: var(--bb-text-3);
 }
 .bb-state {
   font-size: 11px;
@@ -323,7 +381,7 @@
 }
 .bb-why {
   font-size: 11px;
-  color: #46566a;
+  color: var(--bb-text-2);
   line-height: 1.5;
   min-height: 34px;
   margin: 14px 0 6px;
@@ -364,20 +422,20 @@
   display: inline-flex;
   align-items: center;
   min-height: 24px;
-  color: #185b99;
+  color: var(--bb-link);
   text-decoration: underline;
 }
 .bb-source-detail,
 .bb-provenance {
-  color: #5b697a;
+  color: var(--bb-text-3);
   overflow-wrap: anywhere;
 }
 .bb-notice {
-  background: #fff5df;
-  border: 1px solid #d4b875;
+  background: var(--bb-notice-bg);
+  border: 1px solid var(--bb-notice-border);
   padding: 12px;
   margin-bottom: 16px;
-  color: #704b18;
+  color: var(--bb-notice-text);
   overflow-wrap: anywhere;
 }
 .bb-share {
@@ -386,23 +444,24 @@
   flex-wrap: wrap;
   gap: 10px;
   padding: 14px;
-  border: 1px solid #cdd8e4;
+  border: 1px solid var(--bb-border-control);
   border-radius: 10px;
-  background: white;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+  background: var(--bb-card);
+  box-shadow: 0 1px 2px var(--bb-shadow);
   margin-bottom: 15px;
 }
 .bb-share input {
   flex: 1;
   min-width: 150px;
-  border: 1px solid #adbaca;
+  border: 1px solid var(--bb-border-input);
+  background: var(--bb-card);
   padding: 10px;
   color: var(--bb-text-3);
 }
 .bb-footer {
   padding-top: 24px;
   font-size: 10px;
-  color: #5b697a;
+  color: var(--bb-text-3);
 }
 .bb-sr-only {
   position: absolute;
@@ -467,14 +526,14 @@
   margin: 0 0 7px;
   font-size: 11px;
   font-weight: 650;
-  color: #46566a;
+  color: var(--bb-text-2);
 }
 .bb-response-track {
   position: relative;
   height: 12px;
   margin: 0 0 17px;
   border-radius: 2px;
-  background: #e7ecf1;
+  background: var(--bb-track);
 }
 .bb-response-track::before {
   content: "";
@@ -483,7 +542,7 @@
   top: -2px;
   width: 1px;
   height: 16px;
-  background: #63758a;
+  background: var(--bb-track-mid);
 }
 .bb-response-fill {
   position: absolute;
@@ -496,6 +555,6 @@
   top: -3px;
   width: 2px;
   height: 18px;
-  background: #19222d;
+  background: var(--bb-text);
   transform: translateX(-50%);
 }

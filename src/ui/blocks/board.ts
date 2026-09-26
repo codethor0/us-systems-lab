@@ -148,7 +148,7 @@ export function mountBlockBoard(
     element(
       "p",
       "",
-      "50 is unchanged. Red at rest means not adjusted. Color shows level, not good or bad.",
+      "50 is unchanged and grey. Blue is lower, orange is higher. Color shows level, not good or bad.",
     ),
     scale,
   );

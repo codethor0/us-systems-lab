@@ -8,7 +8,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import ts from "typescript";
-import { exactOracle } from "./block-oracle.mjs";
+import { exactOracle, expectedFill } from "./block-oracle.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const reportDirectory = path.join(root, ".artifacts", "math");
 const graph = JSON.parse(await fs.readFile(path.join(root, "src/data/graph.json"), "utf8"));
@@ -122,9 +122,7 @@ try {
           expected: direction,
           actual: drawn.direction,
         });
-      const wantedColor = wanted.idle
-        ? "#c84040"
-        : `hsl(${Math.round(wanted.position * 1.2)} 65% 35%)`;
+      const wantedColor = expectedFill(wanted.position, wanted.idle);
       if (fillColor(drawn.position, wanted.idle) !== wantedColor)
         report.errors.push({ scenario: c, id, key: "color" });
       report.nodeComparisons++;

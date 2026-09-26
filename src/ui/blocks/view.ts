@@ -50,8 +50,31 @@ export function levelText(value: number): string {
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 }).format(value);
 }
 
+/**
+ * Diverging, colour-blind-safe scale: neutral grey at 50, blue below, orange above. Every
+ * blend keeps at least 3:1 contrast against the light and dark card and empty-square
+ * colours in board.css, so one value works in both themes (src/repo/block-board.test.ts).
+ */
+export const FILL_LOW = "#3b76c8";
+export const FILL_NEUTRAL = "#7c848f";
+export const FILL_HIGH = "#c2640f";
+
+function channel(hex: string, start: number): number {
+  return parseInt(hex.slice(start, start + 2), 16);
+}
+
 export function fillColor(position: number, idle: boolean): string {
-  return idle ? "#c84040" : `hsl(${String(roundStable(position * 1.2))} 65% 35%)`;
+  if (idle) return FILL_NEUTRAL;
+  const weight = Math.abs(position - 50) / 50;
+  const end = position < 50 ? FILL_LOW : FILL_HIGH;
+  let hex = "#";
+  for (const start of [1, 3, 5]) {
+    const from = channel(FILL_NEUTRAL, start);
+    // roundStable: a position one ulp off (44.99999999999999 for 45) must not flip a .5 channel.
+    const value = roundStable(from + (channel(end, start) - from) * weight);
+    hex += value.toString(16).padStart(2, "0");
+  }
+  return hex;
 }
 
 function count(n: number, one: string, many: string): string {

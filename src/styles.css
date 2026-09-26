@@ -1,9 +1,20 @@
+:root {
+  color-scheme: light dark;
+}
+
 html,
 body {
   margin: 0;
 }
 
+/* Matches --bb-bg in src/ui/blocks/board.css so overscroll never flashes another colour. */
 body {
   min-width: 320px;
-  background: #ffffff;
+  background: #f6f7f9;
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0e1217;
+  }
 }

@@ -7,7 +7,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath, URLSearchParams } from "node:url";
 import { startBrowser, requireCheck, sleep } from "./block-browser.mjs";
-import { exactOracle } from "./block-oracle.mjs";
+import { exactOracle, expectedFill } from "./block-oracle.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const graph = JSON.parse(await fs.readFile(path.join(root, "src/data/graph.json"), "utf8"));
@@ -117,7 +117,7 @@ function assertState(state, entries, label) {
               : "Unchanged"),
       `${label}: incorrect response direction ${card.id}`,
     );
-    const color = e.idle ? "#c84040" : `hsl(${Math.round(e.position * 1.2)} 65% 35%)`;
+    const color = expectedFill(e.position, e.idle);
     requireCheck(
       card.color === color &&
         auto.matchesFillColor &&
@@ -182,8 +182,8 @@ async function run() {
     requireCheck(initial.build === expectedBuild, "Wrong build is being tested");
     assertState(initial, [], "baseline");
     requireCheck(
-      initial.cards.every((x) => x.state === "idle" && x.color === "#c84040"),
-      "baseline must be red/50",
+      initial.cards.every((x) => x.state === "idle" && x.color === expectedFill(50, true)),
+      "baseline must be neutral grey at 50",
     );
     const geometry =
       await cdp.evaluate(`(() => ({width:innerWidth,scroll:document.documentElement.scrollWidth,

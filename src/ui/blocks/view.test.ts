@@ -58,11 +58,24 @@ describe("Block Board display coordinates", () => {
     expect(blockPosition(1e-10).direction).toBe("Increased");
     expect(signed(0.00001)).toBe("+1.00e-5");
     expect(signed(-0.00001)).toBe("-1.00e-5");
-    expect(fillColor(50 + 50 * (0.3 * 0.75 - 0.8), false)).toBe("hsl(26 65% 35%)");
+    // Position 21.25 is 0.575 of the way to blue: (87, 124, 176).
+    expect(fillColor(50 + 50 * (0.3 * 0.75 - 0.8), false)).toBe("#577cb0");
   });
-  it("uses red only for idle and explicit signed text", () => {
-    expect(fillColor(50, true)).toBe("#c84040");
-    expect(fillColor(100, false)).toBe("hsl(120 65% 35%)");
+  it("colours untouched tiles grey and blends grey to blue (lower) or orange (higher)", () => {
+    expect(fillColor(50, true)).toBe("#7c848f");
+    expect(fillColor(50, false)).toBe("#7c848f");
+    expect(fillColor(0, false)).toBe("#3b76c8");
+    expect(fillColor(100, false)).toBe("#c2640f");
+    // Halfway to orange: (124 + 70/2, 132 - 32/2, 143 - 128/2) = (159, 116, 79).
+    expect(fillColor(75, false)).toBe("#9f744f");
+    // Halfway to blue: (124 - 65/2, 132 - 14/2, 143 + 57/2) = (91.5, 125, 171.5), rounded up.
+    expect(fillColor(25, false)).toBe("#5c7dac");
+    // 45 is 0.1 toward blue, so red is 124 - 6.5 = 117.5 -> 118 (0x76). The model draws this
+    // tile at 44.99999999999999; one ulp must not round the tie the other way.
+    expect(fillColor(45, false)).toBe("#768395");
+    expect(fillColor(44.99999999999999, false)).toBe("#768395");
+  });
+  it("formats signed text without a spurious sign", () => {
     expect(signed(0)).toBe("0");
     expect(signed(-0)).toBe("0");
     expect(signed(-0.25)).toBe("-0.25");
