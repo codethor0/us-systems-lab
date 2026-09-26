@@ -157,6 +157,15 @@ describe("the steps", () => {
     }
   });
 
+  it("pins every job to an explicit runner image rather than a moving -latest label", () => {
+    const runners = lines()
+      .map((line) => /^\s*runs-on:\s*(\S+)\s*$/.exec(line)?.[1])
+      .filter((label): label is string => label !== undefined);
+    expect(runners).toEqual(["ubuntu-24.04"]);
+    const config = lines().filter((line) => !/^\s*#/.test(line));
+    expect(config.join("\n")).not.toMatch(/-latest\b/);
+  });
+
   it("does not deploy or publish anything, since Cloudflare deploys from its own integration", () => {
     expect(workflow).not.toMatch(/\b(deploy|publish|wrangler|cloudflare)\b/i);
   });

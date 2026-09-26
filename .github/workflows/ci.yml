@@ -16,7 +16,9 @@ concurrency:
 jobs:
   verify:
     name: verify
-    runs-on: ubuntu-latest
+    # Pinned, not ubuntu-latest: the browser suite uses the runner's own Chrome, so an OS
+    # move (ubuntu-latest becomes Ubuntu 26 from 2026-10-19) must be its own reviewed change.
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Check out the repository
