@@ -54,4 +54,11 @@ describe("Cloudflare static-only deployment contract", () => {
       expect(config).not.toHaveProperty(forbidden);
     }
   });
+
+  it("documents deployment as manual, not triggered by a merge to main", () => {
+    const deployment = readFileSync(path.join(root, "DEPLOYMENT.md"), "utf8");
+    expect(deployment).toContain("Deployment is manual.");
+    expect(deployment).toContain("npx --no-install wrangler deploy");
+    expect(deployment).not.toMatch(/Workers Builds can publish when the production branch changes/);
+  });
 });

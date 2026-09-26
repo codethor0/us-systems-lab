@@ -35,10 +35,12 @@ feature branch, obtain review, and require successful CI for the exact release
 commit before it enters protected `main`. Do not force-push, auto-merge, or accept
 an unsigned release-history commit.
 
-The GitHub Actions workflow verifies code; it deploys nothing. Cloudflare Workers
-Builds is a separate integration. Do not assume a successful Cloudflare build
-means GitHub's verification job succeeded. Branch protection and explicit release
-review are the gates before code reaches the production branch.
+The GitHub Actions workflow verifies code; it deploys nothing. Merging to `main`
+does not change production either: after pull request 10 merged on 2026-09-24
+(UTC), the live site kept serving the previous build until the owner deployed
+manually more than two hours later. Branch protection and explicit release review
+are the gates before code reaches the production branch; a manual deployment is
+the separate step that publishes it.
 
 ## Cloudflare configuration
 
@@ -49,11 +51,15 @@ server-side services, paid storage, or new credentials for this static release.
 Review current Cloudflare plan and billing settings before changing infrastructure;
 no paid service or surprise metered runtime is part of this project's design.
 
-Workers Builds can publish when the production branch changes. First check whether
-it already published the exact approved commit. Do not deploy a second, different
-local candidate over it. If an owner-controlled manual deployment is needed, use
-only the clean, signed, verified release checkout, authenticated locally. Never
-paste account tokens or signing keys into source, logs, or audit bundles.
+Deployment is manual. Before deploying, check what production serves: if it
+already serves the exact approved build, do not deploy a second, different local
+candidate over it. Otherwise deploy only from the clean, signed, verified release
+checkout, authenticated locally. A change that leaves the built files identical,
+such as tooling, tests, or documentation, needs no deployment. If a Cloudflare
+Workers Builds integration is connected later, update this section, and do not
+treat a successful Cloudflare build as proof that GitHub's verification job
+succeeded. Never paste account tokens or signing keys into source, logs, or audit
+bundles.
 
 ## Live verification and rollback
 

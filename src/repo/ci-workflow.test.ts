@@ -166,7 +166,7 @@ describe("the steps", () => {
     expect(config.join("\n")).not.toMatch(/-latest\b/);
   });
 
-  it("does not deploy or publish anything, since Cloudflare deploys from its own integration", () => {
+  it("does not deploy or publish anything; production changes only by a manual owner deploy", () => {
     expect(workflow).not.toMatch(/\b(deploy|publish|wrangler|cloudflare)\b/i);
   });
 });
