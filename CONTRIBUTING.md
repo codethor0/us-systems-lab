@@ -81,6 +81,9 @@ How to verify a starting value:
 
 ## Before you open a pull request
 
+- Each commit has one author. Do not add `Co-authored-by` trailers or "Generated with" lines to
+  commit messages or the pull request description; `npm run check:attribution` rejects them in
+  continuous integration.
 - Run `npm run verify`. It runs lint, type check, format check, the tests with a 100 percent
   coverage threshold for `src/lib`, the script tests, and the emoji check. Continuous integration
   runs the same checks and also audits dependencies.
