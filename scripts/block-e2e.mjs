@@ -25,6 +25,7 @@ const expectedBuild = /BLOCK_BUILD\s*=\s*["']([^"']+)/.exec(
 )?.[1];
 requireCheck(expectedBuild, "Missing expected build identifier");
 const expectedScenario = exactOracle(graph);
+const axeSource = await fs.readFile(path.join(root, "node_modules/axe-core/axe.min.js"), "utf8");
 const session = await startBrowser();
 const { cdp, artifacts } = session;
 const report = {
@@ -169,6 +170,57 @@ async function capture(name) {
   await cdp.evaluate("window.scrollTo(0,0)");
   await sleep(100);
   await cdp.screenshot(path.join(artifacts, name + ".png"));
+}
+/** WCAG 2.0, 2.1 and 2.2 at levels A and AA, as axe-core tags them. */
+const AXE_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
+async function axeViolations() {
+  if (!(await cdp.evaluate("typeof window.axe === 'object'"))) {
+    await cdp.evaluate(axeSource + "\n;true");
+  }
+  return await cdp.evaluate(
+    `axe.run(document,{runOnly:{type:'tag',values:${JSON.stringify(AXE_TAGS)}},resultTypes:['violations']})` +
+      `.then(r=>r.violations.map(v=>({id:v.id,impact:v.impact,targets:v.nodes.slice(0,3).map(n=>n.target.join(' '))})))`,
+  );
+}
+/**
+ * Scans the built page with axe-core in light and dark mode, at neutral and with a lever raised,
+ * with every "Why & source" panel open. A control without an accessible name must be reported,
+ * so a scan that silently checks nothing fails.
+ */
+async function accessibilityScan() {
+  await session.viewport(1440, 1000);
+  for (const scheme of ["light", "dark"]) {
+    await cdp.send("Emulation.setEmulatedMedia", {
+      features: [{ name: "prefers-color-scheme", value: scheme }],
+    });
+    await session.navigate();
+    await cdp.evaluate("document.querySelectorAll('.bb-details').forEach(d=>{d.open=true})");
+    for (const [label, lever] of [
+      ["neutral", null],
+      ["raised", "fed_rate"],
+    ]) {
+      if (lever) {
+        await extreme(lever, 1);
+        await waitForScenario([[lever, 1]], `axe ${scheme} ${label}`);
+      }
+      const violations = await axeViolations();
+      requireCheck(
+        violations.length === 0,
+        `axe ${scheme}/${label}: ${JSON.stringify(violations)}`,
+      );
+      report.assertions.push(`axe WCAG 2.2 A/AA: ${scheme}, ${label}`);
+    }
+  }
+  await cdp.evaluate(
+    "document.querySelector('[data-block-board]').append(Object.assign(document.createElement('button'),{id:'axe-control'}))",
+  );
+  const control = await axeViolations();
+  requireCheck(
+    control.some((v) => v.id === "button-name" && v.targets.includes("#axe-control")),
+    "axe negative control was not detected: " + JSON.stringify(control),
+  );
+  await cdp.send("Emulation.setEmulatedMedia", { features: [] });
+  report.assertions.push("axe negative control detected");
 }
 async function run() {
   for (const [width, height] of [
@@ -572,6 +624,7 @@ async function run() {
     sources.every((source) => source.width >= 24 && source.height >= 24),
     "source link pointer targets are below 24px",
   );
+  await accessibilityScan();
   const failures = session.failures;
   requireCheck(
     Object.values(failures).every((a) => a.length === 0),

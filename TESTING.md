@@ -91,7 +91,7 @@ Do not include generated build output, credentials, local machine paths, private
 
 Run `npm run check:sources` only when an operator intentionally wants the best-effort external source reachability report. It needs network access and is not part of `npm run verify` or CI. It treats only HTTP 2xx and 3xx responses as reachable. Network failures and HTTP 4xx or 5xx responses are reported as unsuccessful reachability, but the report is diagnostic: it does not establish source validity, factual correctness, or currency, and it is not a substitute for reviewing the cited primary source.
 
-The browser harness checks the keyboard path and accessible names used by the application. No automated axe/WCAG conformance scan is currently part of the repository gate, so these tests must not be treated as a complete accessibility certification.
+`npm run test:e2e` also runs an axe-core scan for WCAG 2.2 A and AA rules in light and dark mode, at neutral and with a lever raised, with every "Why & source" panel open. A button with no accessible name is added at the end as a control and must be reported. Automated rules catch only part of WCAG, so this is not an accessibility certification.
 
 ## Rapid input and address-bar synchronization
 

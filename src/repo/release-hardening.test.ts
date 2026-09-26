@@ -36,7 +36,9 @@ describe("release hardening contracts", () => {
     expect(testing).toContain("npm run check:sources");
     expect(testing).toContain("best-effort external source reachability report");
     expect(testing).toContain("does not establish source validity");
-    expect(testing).toContain("No automated axe/WCAG conformance scan");
+    expect(testing).toContain("axe-core scan");
+    expect(testing).toContain("not an accessibility certification");
+    expect(testing).not.toContain("No automated axe/WCAG conformance scan");
     expect(testing).toContain("npm audit --audit-level=low");
   });
 

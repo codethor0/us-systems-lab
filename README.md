@@ -60,8 +60,8 @@ and follows the rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Early. Built and tested: the data model and its validator, a graph with cited starting values, the
 propagation logic, the Block Board interface, real-Chrome browser tests, and the repository's
-automated checks. An axe-core 4.13 scan of the built page on 2026-09-26, in light and dark mode,
-found no WCAG 2.2 A or AA violations; that scan is not yet part of continuous integration.
+automated checks, including an axe-core scan for WCAG 2.2 A and AA rules in light and dark mode
+on every CI run.
 [DEPLOYMENT.md](DEPLOYMENT.md)
 records the hosting decision and steps, and [TESTING.md](TESTING.md) records what each check does and
 does not establish.
