@@ -153,8 +153,8 @@ class AttributionCheckTest(unittest.TestCase):
         git(root, "checkout", "-q", "-b", "side")
         commit(root, "side work")
         git(root, "checkout", "-q", "-")
-        env = {**os.environ, "GIT_AUTHOR_EMAIL": "noreply@github.com",
-               "GIT_COMMITTER_EMAIL": "noreply@github.com"}
+        env = {**os.environ, "GIT_AUTHOR_NAME": "GitHub", "GIT_AUTHOR_EMAIL": "noreply@github.com",
+               "GIT_COMMITTER_NAME": "GitHub", "GIT_COMMITTER_EMAIL": "noreply@github.com"}
         subprocess.run(["git", "-C", str(root), "-c", "commit.gpgsign=false", "merge", "-q",
                         "--no-ff", "-m", "Merge side", "side"], check=True, capture_output=True, env=env)
         self.assertEqual(run_main(root)[0], 0)
