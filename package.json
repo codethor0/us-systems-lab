@@ -4,6 +4,15 @@
   "private": true,
   "type": "module",
   "license": "MIT",
+  "author": "codethor0 (https://github.com/codethor0)",
+  "homepage": "https://us-systems-lab.codethor0.workers.dev/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codethor0/us-systems-lab.git"
+  },
+  "bugs": {
+    "url": "https://github.com/codethor0/us-systems-lab/issues"
+  },
   "engines": {
     "node": ">=24"
   },

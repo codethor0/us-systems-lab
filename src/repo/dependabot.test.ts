@@ -51,11 +51,13 @@ describe("pull requests only, and never merged automatically", () => {
     expect(config).not.toMatch(/^registries:/m);
   });
 
-  it.each(["npm", "github-actions"])("limits %s to five open pull requests", (name) => {
-    const limit = /^ {4}open-pull-requests-limit: (\d+)$/m.exec(block(name))?.[1];
-    expect(Number(limit)).toBeGreaterThan(0);
-    expect(Number(limit)).toBeLessThanOrEqual(5);
-  });
+  it.each(["npm", "github-actions"])(
+    "opens no %s version-update pull requests, so no bot becomes a contributor",
+    (name) => {
+      const limit = /^ {4}open-pull-requests-limit: (\d+)$/m.exec(block(name))?.[1];
+      expect(limit).toBe("0");
+    },
+  );
 });
 
 describe("schedule and delay", () => {
