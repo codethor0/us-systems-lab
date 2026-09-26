@@ -61,4 +61,13 @@ describe("Cloudflare static-only deployment contract", () => {
     expect(deployment).toContain("npx --no-install wrangler deploy");
     expect(deployment).not.toMatch(/Workers Builds can publish when the production branch changes/);
   });
+
+  // The SPA fallback answers every unknown path with index.html, so without this file a crawler
+  // asking for /robots.txt receives the app's HTML with status 200.
+  it("ships a plain robots.txt that allows crawling", () => {
+    const robotsPath = path.join(root, "public/robots.txt");
+    expect(existsSync(robotsPath)).toBe(true);
+    if (!existsSync(robotsPath)) return;
+    expect(readFileSync(robotsPath, "utf8")).toBe("User-agent: *\nAllow: /\n");
+  });
 });
