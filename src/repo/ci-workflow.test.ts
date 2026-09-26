@@ -166,6 +166,19 @@ describe("the steps", () => {
     expect(config.join("\n")).not.toMatch(/-latest\b/);
   });
 
+  it("checks attribution over the full history, with pull request text passed only as env", () => {
+    expect(workflow).toContain("fetch-depth: 0");
+    expect(indexOfCommand("npm run check:attribution")).toBeGreaterThan(-1);
+    expect(workflow).toContain("PR_TITLE: ${{ github.event.pull_request.title }}");
+    expect(workflow).toContain("PR_BODY: ${{ github.event.pull_request.body }}");
+    for (const command of runCommands()) expect(command).not.toContain("github.event");
+    expect(packageJson.scripts.verify).toContain("npm run check:attribution");
+  });
+
+  it("runs weekly on a schedule so breakage shows up without a push", () => {
+    expect(workflow).toMatch(/^ {2}schedule:\n {4}- cron: "[^"]+"$/m);
+  });
+
   it("does not deploy or publish anything; production changes only by a manual owner deploy", () => {
     expect(workflow).not.toMatch(/\b(deploy|publish|wrangler|cloudflare)\b/i);
   });

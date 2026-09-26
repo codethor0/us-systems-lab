@@ -1,5 +1,9 @@
 # US Systems Lab
 
+[![CI](https://github.com/codethor0/us-systems-lab/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/codethor0/us-systems-lab/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Live site](https://img.shields.io/badge/live-us--systems--lab.codethor0.workers.dev-2f6fb7.svg)](https://us-systems-lab.codethor0.workers.dev/)
+
 **[Try it live](https://us-systems-lab.codethor0.workers.dev/)** — no install, no signup.
 
 An interactive block board of U.S. economic and social indicators. Each indicator is a tile of 100

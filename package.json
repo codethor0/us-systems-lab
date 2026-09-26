@@ -15,13 +15,14 @@
     "coverage": "vitest run --coverage",
     "check:emoji": "python3 scripts/check-no-emoji.py",
     "test:scripts": "python3 -B -m unittest discover -s scripts -p 'test_*.py'",
-    "verify": "npm run lint && npm run typecheck && npm run format:check && npm run coverage && npm run build && npm run test:scripts && npm run check:emoji && npm run test:math",
+    "verify": "npm run lint && npm run typecheck && npm run format:check && npm run coverage && npm run build && npm run test:scripts && npm run check:emoji && npm run check:attribution && npm run test:math",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "test:e2e": "npm run build && npm run test:math && node scripts/block-e2e.mjs",
     "check:sources": "node scripts/check-sources.mjs",
-    "test:math": "node scripts/model-audit.mjs"
+    "test:math": "node scripts/model-audit.mjs",
+    "check:attribution": "python3 scripts/check-attribution.py"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

@@ -5,6 +5,9 @@ on:
     branches: [main]
   push:
     branches: [main]
+  # Weekly run on main so a broken dependency or runner change shows up without a push.
+  schedule:
+    - cron: "17 6 * * 1"
 
 permissions:
   contents: read
@@ -25,6 +28,8 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          # Full history: the attribution check reads every commit message.
+          fetch-depth: 0
 
       - name: Set up Node from .nvmrc
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
@@ -60,6 +65,13 @@ jobs:
 
       - name: Check for emoji
         run: npm run check:emoji
+
+      - name: Check commit and pull request attribution
+        # Passed as environment variables, never interpolated into the shell command.
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: npm run check:attribution
 
       - name: Run production browser verification
         # GitHub-hosted Linux runners cannot create Chrome's sandbox namespaces inside
