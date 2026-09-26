@@ -5,6 +5,11 @@
 An interactive block board of U.S. economic and social indicators. Each indicator is a tile of 100
 squares. Move one input and watch the tiles it is connected to gain or lose squares and change color.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/board-dark.png" />
+  <img src="docs/board-light.png" width="960" alt="The Block Board with the federal funds rate raised to 100: raised tiles are orange, lowered tiles are blue, and untouched tiles are grey at 50." />
+</picture>
+
 > **Read this first.** This is an illustrative model for exploring how systems connect. It is not
 > a predictive economic tool and not a forecast. The numbers it propagates are arithmetic on
 > hand-assigned weights, not estimates of what would happen if a real policy or event moved a real
@@ -12,14 +17,18 @@ squares. Move one input and watch the tiles it is connected to gain or lose squa
 
 ## Using the board
 
-- Every tile starts at **50 out of 100** and red, labeled **Not adjusted**. The 50 is a display
-  convention that leaves room to move both up and down. It is not a health rating.
+<img src="docs/board-demo.webp" width="720" alt="Dragging the federal funds rate slider from 50 up to 100, down to 0 and back: the connected tiles gain and lose squares and shift between orange and blue while unconnected tiles stay grey." />
+
+- Every tile starts at **50 out of 100** in neutral grey, labeled **Not adjusted**. The 50 is a
+  display convention that leaves room to move both up and down. It is not a health rating.
 - Set **your input** for a tile with its slider, or click a square. Inputs move in steps of five.
 - The squares and **Combined response (automatic)** bar show the tile's **combined result**: your input plus the effects that reach it from
   other inputs, over paths of up to three relationships. The automatic bar shows a continuous position,
   while squares are rounded. Displayed results never become new inputs.
-- Color shows level, lower to higher. It does not show worse to better: a higher federal debt is
-  not a better one.
+- Color shows level: grey at 50, blue below, orange above. Blue and orange stay distinguishable
+  with the common forms of color blindness. Color does not show worse to better: a higher federal
+  debt is not a better one.
+- The page follows the system light or dark setting.
 - Open **Why & source** on a tile for the paths behind its result, the relationships it belongs to,
   and the stored baseline with its source. A stored baseline does not change with your input.
 - **Reset** returns every tile to 50. **Share** shows a link that reproduces your inputs.
@@ -47,7 +56,9 @@ and follows the rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Early. Built and tested: the data model and its validator, a graph with cited starting values, the
 propagation logic, the Block Board interface, real-Chrome browser tests, and the repository's
-automated checks. No automated accessibility conformance scan runs yet. [DEPLOYMENT.md](DEPLOYMENT.md)
+automated checks. An axe-core 4.13 scan of the built page on 2026-09-26, in light and dark mode,
+found no WCAG 2.2 A or AA violations; that scan is not yet part of continuous integration.
+[DEPLOYMENT.md](DEPLOYMENT.md)
 records the hosting decision and steps, and [TESTING.md](TESTING.md) records what each check does and
 does not establish.
 
@@ -69,8 +80,8 @@ An arrow is modeled unless someone supplies a checkable citation. Nothing is pro
 
 The starting value of each indicator has its own, separate label. `primary` means a page at the
 primary publisher was read on a stated date and the figure was found on it. `secondary` means a news
-page or aggregator relays the figure. `pending` means a value was supplied but no source page has
-been read yet. Abstract levers, such as worker bargaining power, sit on an index from 0 to 100 and
+page or aggregator relays the figure. `pending` means no source page has been read yet, so no
+source is stored. Abstract levers, such as worker bargaining power, sit on an index from 0 to 100 and
 have no baseline at all, because there is nothing measured to check.
 
 The graph currently has 20 nodes and 20 edges: 0 empirical and 20 modeled. Every arrow is therefore
@@ -84,6 +95,20 @@ three arrows from that indicator. Each arrow multiplies the change by its direct
 its strength, and every arrow after the first shrinks the change by a decay factor (0.7 by default,
 a starting point with no empirical basis). Effects that arrive by different routes add, and the
 total for each indicator is clamped to the range -1 to 1.
+
+```mermaid
+flowchart LR
+  A["Your input<br/>-1 to 1"] --> B["Every path of<br/>up to 3 arrows"]
+  B --> C["Each arrow multiplies by<br/>direction and strength"]
+  C --> D["x 0.7 for each arrow<br/>after the first"]
+  D --> E["Sum all routes,<br/>clamp to -1 to 1"]
+  E --> F["Tile position<br/>50 + 50 x score"]
+```
+
+The three-arrow limit is visible on the board. Raising the federal funds rate reaches median
+household income in three arrows (through inflation and real hourly earnings), so the official
+poverty rate, one arrow further, does not move, and its tile says that no input reaches it within
+three relationships.
 
 That is all. It is arithmetic, not estimates, and it knows nothing about the economy. The header of
 that file states what it does and does not show, including short arguments that its output is

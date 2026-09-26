@@ -1,4 +1,5 @@
 import type { Graph, GraphNode } from "../../lib/schema";
+import { DEFAULT_PARAMS } from "../../lib/propagation";
 import { createUrlSync } from "./url-sync";
 import type { ScenarioEffect } from "../../model/effects";
 import {
@@ -386,7 +387,11 @@ export function mountBlockBoard(
     "bb-footer",
     `Block Board v1 | Build ${services.build} | Model ${services.stamp} | ${String(graph.nodes.length)} indicators / ${String(graph.edges.length)} relationships. Sources and assumptions are inside each tile.`,
   );
-  container.append(header, shareBox, legend, info, counts, message, notice, board, footer);
+  // A labelled section keeps the disclaimer and counts inside a landmark (axe "region").
+  const summary = element("section", "bb-summary");
+  summary.setAttribute("aria-label", "Board summary");
+  summary.append(info, counts);
+  container.append(header, shareBox, legend, summary, message, notice, board, footer);
   root.replaceChildren(container);
 
   const linkNotice = element("p", "bb-notice");
@@ -495,7 +500,9 @@ export function mountBlockBoard(
           ? `Affected by ${contributors.map((id) => labels.get(id) ?? id).join(", ")}.`
           : own !== 0
             ? "Your manual input."
-            : "No incoming modeled response.";
+            : graph.edges.some((edge) => edge.to === tile.node.id)
+              ? `No input reaches this tile within ${String(DEFAULT_PARAMS.maxHops)} relationships.`
+              : "No incoming relationships; only your own input moves this tile.";
       if (!graph.edges.some((edge) => edge.from === tile.node.id || edge.to === tile.node.id))
         tile.why.textContent = "No modeled connections.";
       tile.numbers.textContent = `Manual ${signed(own)}; incoming ${signed(effect?.propagated ?? 0)}; total ${signed(effect?.total ?? 0)}; clamped score ${signed(delta)}. Display position = 50 + 50 x score. Whole blocks are rounded symmetrically; calculations keep full precision.`;

@@ -13,18 +13,30 @@ const graph = JSON.parse(
 );
 const urls = [...new Set(graph.nodes.map((node) => node.sourceUrl).filter(Boolean))];
 
-async function probe(url) {
+async function request(url, method) {
   const controller = new AbortController();
   const timer = setTimeout(() => {
     controller.abort();
   }, 5000);
   try {
     const response = await fetch(url, {
-      method: "HEAD",
+      method,
       redirect: "follow",
       signal: controller.signal,
       headers: { "user-agent": "US-Systems-Lab-link-check/1.0" },
     });
+    await response.body?.cancel();
+    return response;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function probe(url) {
+  try {
+    let response = await request(url, "HEAD");
+    // Some servers (the Treasury Fiscal Data API) reject HEAD but serve GET.
+    if (response.status === 405 || response.status === 501) response = await request(url, "GET");
     return {
       url,
       ok: response.status >= 200 && response.status < 400,
@@ -33,8 +45,6 @@ async function probe(url) {
     };
   } catch (error) {
     return { url, ok: false, error: error instanceof Error ? error.message : String(error) };
-  } finally {
-    clearTimeout(timer);
   }
 }
 

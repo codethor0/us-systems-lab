@@ -32,6 +32,23 @@ function change(id: string, value: string): void {
   fireEvent.input(item, { target: { value } });
 }
 
+describe("tile explanation when nothing reaches a tile", () => {
+  it("names the hop limit, a missing incoming edge, or no connections at all", () => {
+    // fed_rate -> inflation -> earnings -> income is 3 hops; income -> poverty would be the 4th.
+    window.history.replaceState(null, "", "/?l=fed_rate:100");
+    render(<BlockApp />);
+    const why = (id: string) => tile(id).querySelector(".bb-why")?.textContent;
+    expect(tile("median_household_income").dataset.state).toBe("up");
+    expect(tile("poverty_rate").dataset.state).toBe("idle");
+    expect(why("poverty_rate")).toBe("No input reaches this tile within 3 relationships.");
+    expect(why("productivity")).toBe(
+      "No incoming relationships; only your own input moves this tile.",
+    );
+    expect(why("hate_crimes")).toBe("No modeled connections.");
+    expect(why("fed_rate")).toBe("Your manual input.");
+  });
+});
+
 describe("active Block Board", () => {
   it("renders twenty red neutral grids with one hundred squares each under StrictMode", () => {
     render(
