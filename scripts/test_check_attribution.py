@@ -24,16 +24,27 @@ def git(root, *args):
     subprocess.run(["git", "-C", str(root), *args], check=True, capture_output=True)
 
 
-def repo_with(messages):
+def commit(root, message, author="tester@example.com", committer=None):
+    env = {
+        **os.environ,
+        "GIT_AUTHOR_NAME": "A", "GIT_AUTHOR_EMAIL": author,
+        "GIT_COMMITTER_NAME": "C", "GIT_COMMITTER_EMAIL": committer or author,
+    }
+    subprocess.run(
+        ["git", "-C", str(root), "-c", "commit.gpgsign=false",
+         "commit", "-q", "--allow-empty", "-m", message],
+        check=True, capture_output=True, env=env,
+    )
+
+
+def repo_with(messages, allowed="tester@example.com\n"):
     root = Path(tempfile.mkdtemp())
     git(root, "init", "-q")
+    if allowed is not None:
+        (root / ".github").mkdir()
+        (root / ".github" / "allowed-authors").write_text("# owner\n" + allowed)
     for message in messages:
-        git(
-            root,
-            "-c", "user.name=Tester", "-c", "user.email=tester@example.com",
-            "-c", "commit.gpgsign=false",
-            "commit", "-q", "--allow-empty", "-m", message,
-        )
+        commit(root, message)
     return root
 
 
@@ -94,14 +105,59 @@ class AttributionCheckTest(unittest.TestCase):
             ["git", "clone", "-q", "--depth", "1", f"file://{source}", str(shallow)],
             check=True, capture_output=True,
         )
+        (shallow / ".github").mkdir()
+        (shallow / ".github" / "allowed-authors").write_text("tester@example.com\n")
         code, _, err = run_main(shallow)
         self.assertEqual(code, 2)
         self.assertIn("shallow", err)
 
     def test_not_a_repository_is_an_error_not_a_pass(self):
-        code, _, err = run_main(Path(tempfile.mkdtemp()))
+        root = Path(tempfile.mkdtemp())
+        (root / ".github").mkdir()
+        (root / ".github" / "allowed-authors").write_text("tester@example.com\n")
+        code, _, err = run_main(root)
         self.assertEqual(code, 2)
         self.assertIn("cannot read git history", err)
+
+    def test_missing_or_empty_allowed_authors_is_an_error(self):
+        self.assertEqual(run_main(repo_with(["x"], allowed=None))[0], 2)
+        self.assertEqual(run_main(repo_with(["x"], allowed="# only a comment\n"))[0], 2)
+
+    def test_a_bot_author_fails(self):
+        root = repo_with(["feat: ok"])
+        commit(root, "chore(deps): bump", author="49699333+dependabot[bot]@users.noreply.github.com")
+        code, out, _ = run_main(root)
+        self.assertEqual(code, 1)
+        self.assertIn("is not in .github/allowed-authors", out)
+
+    def test_github_merge_identity_is_an_allowed_committer_but_not_an_author(self):
+        root = repo_with(["feat: ok"])
+        commit(root, "squash merge", committer="noreply@github.com")
+        self.assertEqual(run_main(root)[0], 0)
+        commit(root, "web edit", author="noreply@github.com")
+        self.assertEqual(run_main(root)[0], 1)
+
+    def test_an_unlisted_committer_fails(self):
+        root = repo_with(["feat: ok"])
+        commit(root, "rebased elsewhere", committer="someone@example.com")
+        code, out, _ = run_main(root)
+        self.assertEqual(code, 1)
+        self.assertIn("committer someone@example.com is not allowed", out)
+
+    def test_allowed_addresses_match_case_insensitively(self):
+        root = repo_with(["feat: ok"], allowed="Tester@Example.com\n")
+        self.assertEqual(run_main(root)[0], 0)
+
+    def test_merge_commits_skip_the_author_check_but_not_the_message_check(self):
+        root = repo_with(["base"])
+        git(root, "checkout", "-q", "-b", "side")
+        commit(root, "side work")
+        git(root, "checkout", "-q", "-")
+        env = {**os.environ, "GIT_AUTHOR_EMAIL": "noreply@github.com",
+               "GIT_COMMITTER_EMAIL": "noreply@github.com"}
+        subprocess.run(["git", "-C", str(root), "-c", "commit.gpgsign=false", "merge", "-q",
+                        "--no-ff", "-m", "Merge side", "side"], check=True, capture_output=True, env=env)
+        self.assertEqual(run_main(root)[0], 0)
 
 
 if __name__ == "__main__":
