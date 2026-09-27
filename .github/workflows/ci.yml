@@ -22,7 +22,8 @@ jobs:
     # Pinned, not ubuntu-latest: the browser suite uses the runner's own Chrome, so an OS
     # move (ubuntu-latest becomes Ubuntu 26 from 2026-10-19) must be its own reviewed change.
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    # Runs take 5 to 6 minutes; the margin keeps a slow runner from failing a healthy build.
+    timeout-minutes: 20
     steps:
       - name: Check out the repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -89,5 +90,12 @@ jobs:
           path: .artifacts/e2e
           include-hidden-files: true
           retention-days: 5
-      - name: Audit dependencies
+      - name: Audit runtime dependencies
+        # React and React DOM ship in the site. Any advisory in them always fails the run.
+        run: npm audit --omit=dev --audit-level=low
+      - name: Audit all dependencies
+        # A new advisory in a build or test tool can appear any week without a code change.
+        # Pull requests and pushes must fix it; the scheduled run shows it as a failed step
+        # without failing the job, so main stays green until the next change.
+        continue-on-error: ${{ github.event_name == 'schedule' }}
         run: npm audit --audit-level=low

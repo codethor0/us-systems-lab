@@ -179,6 +179,23 @@ describe("the steps", () => {
     expect(workflow).toMatch(/^ {2}schedule:\n {4}- cron: "[^"]+"$/m);
   });
 
+  it("allows twice the usual run time, so a slow runner does not fail a healthy build", () => {
+    // Runs take 5 to 6 minutes; 10 left too little headroom.
+    expect(workflow).toMatch(/^ {4}timeout-minutes: 20$/m);
+  });
+
+  it("always blocks on advisories in the dependencies that ship in the site", () => {
+    const step = /- name: Audit runtime dependencies\n((?: {8}.*\n)+)/.exec(workflow)?.[1] ?? "";
+    expect(step).toContain("run: npm audit --omit=dev --audit-level=low");
+    expect(step).not.toContain("continue-on-error");
+  });
+
+  it("blocks on tool advisories for changes, and only warns on the scheduled run", () => {
+    const step = /- name: Audit all dependencies\n((?: {8}.*\n?)+)/.exec(workflow)?.[1] ?? "";
+    expect(step).toContain("run: npm audit --audit-level=low");
+    expect(step).toContain("continue-on-error: ${{ github.event_name == 'schedule' }}");
+  });
+
   it("does not deploy or publish anything; production changes only by a manual owner deploy", () => {
     expect(workflow).not.toMatch(/\b(deploy|publish|wrangler|cloudflare)\b/i);
   });
