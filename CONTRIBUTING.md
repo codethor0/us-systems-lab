@@ -35,6 +35,28 @@ citation. Until there is one, the edge stays modeled.
 Some lines are absent on purpose. `hate_crimes` has no edges, and a test records that. An edge into
 or out of it needs new evidence and a citation, not an argument.
 
+## Relationship kind and horizon
+
+Every edge also states what it asserts, independent of its `confidence`:
+
+- `kind` is `accounting` when the link follows from how the measures are defined or added up,
+  `causal` when it names a mechanism by which the first indicator moves the second, and
+  `association` when the two move together and the edge does not say which causes which. Use
+  `association` whenever the source, or the argument, shows co-movement only. A claim on an
+  association edge must not use causal verbs such as causes, drives, raises or lowers.
+- `horizon` is `short` (months), `medium` (a year or two) or `long` (several years).
+
+Both labels are for readers. The arithmetic ignores them. A citation for an `empirical` edge must
+support the kind it is labeled with: a table that shows co-movement supports `association`, not
+`causal`.
+
+## Dead ends
+
+A node with no outgoing edge must say why in its `terminal` field, and a node that drives an edge
+must leave `terminal` as `null`. The validator enforces both, so a dead end is always a recorded
+decision. Do not add an edge only so that a tile moves; a stated dead end is better than an invented
+link.
+
 ## Adding a node
 
 A node is an indicator or a lever. Its fields are defined in `src/lib/schema.ts` and enforced by
@@ -50,6 +72,7 @@ A node is an indicator or a lever. Its fields are defined in `src/lib/schema.ts`
 | `asOf`                                       | The period the baseline describes: `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `YYYY-Qn` or `FYYYYY`. Required when there is a baseline.     |
 | `verification`                               | `primary`, `secondary` or `pending` for observed and projected nodes. `null` for an `index` node.                                 |
 | `sourceUrl`, `sourceDetail`, `retrievedDate` | Required for `primary` and `secondary`. For `pending`, `sourceUrl` and `retrievedDate` must be `null`.                            |
+| `terminal`                                   | Why nothing is modeled downstream, required exactly when no edge leaves the node. Otherwise `null`.                               |
 
 How to verify a starting value:
 
@@ -71,7 +94,7 @@ How to verify a starting value:
 - `id` is `from__to`, using the two node ids, and both nodes must exist. No self loops, and no two
   edges with the same id.
 - `direction` is `1` or `-1`. `strength` is one of 0.25, 0.5, 0.75, 1. `confidence` follows the hard
-  rule above.
+  rule above. `kind` and `horizon` follow the section on relationship kind and horizon.
 - **Edges are locked by tests, on purpose.** `src/data/graph.test.ts` lists the accepted edge ids,
   and `src/lib/propagation.test.ts` contains hand-computed expectations for the real graph. Adding,
   removing or reweighting an edge changes them. Update the list, redo the arithmetic by hand in the

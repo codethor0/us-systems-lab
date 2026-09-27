@@ -25,7 +25,10 @@ const SEED_NODE_IDS = [
   "debt_growth_rate",
 ];
 
-/** Edges accepted in review, E1 to E20, with E10 retargeted to debt_growth_rate. */
+/**
+ * Edges accepted in review, E1 to E20, with E10 retargeted to debt_growth_rate, and E21 and E22,
+ * the two accounting links that close the federal borrowing loop.
+ */
 const ACCEPTED_EDGE_IDS = [
   "fed_rate__mortgage_rate",
   "fed_rate__inflation",
@@ -47,6 +50,8 @@ const ACCEPTED_EDGE_IDS = [
   "household_debt__savings_rate",
   "federal_debt__net_interest",
   "media_trust__institutional_confidence",
+  "net_interest__debt_growth_rate",
+  "debt_growth_rate__federal_debt",
 ];
 
 describe("src/data/graph.json", () => {
@@ -93,6 +98,26 @@ describe("src/data/graph.json", () => {
     );
     const growth = graph.edges.find((e) => e.id === "gdp_growth__debt_growth_rate");
     expect(growth?.direction).toBe(-1);
+  });
+
+  it("labels the two federal borrowing links as accounting, not as causal findings", () => {
+    for (const id of ["net_interest__debt_growth_rate", "debt_growth_rate__federal_debt"]) {
+      const edge = graph.edges.find((e) => e.id === id);
+      expect(edge?.kind, id).toBe("accounting");
+      expect(edge?.direction, id).toBe(1);
+    }
+  });
+
+  it("labels the inflation to real earnings link as accounting, because real earnings are deflated by prices", () => {
+    const edge = graph.edges.find((e) => e.id === "inflation__real_avg_hourly_earnings");
+    expect(edge?.kind).toBe("accounting");
+    expect(edge?.direction).toBe(-1);
+  });
+
+  it("never claims causation for a relationship recorded as an association", () => {
+    for (const edge of graph.edges.filter((e) => e.kind === "association")) {
+      expect(edge.claim, edge.id).not.toMatch(/\b(?:causes?|caused|drives?|raises|lowers)\b/i);
+    }
   });
 
   it("stores no derived value for debt_growth_rate", () => {

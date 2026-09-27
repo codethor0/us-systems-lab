@@ -36,6 +36,21 @@ export type Verification = (typeof VERIFICATIONS)[number];
 export const CONFIDENCES = ["empirical", "modeled"] as const;
 export type Confidence = (typeof CONFIDENCES)[number];
 
+/**
+ * What an edge asserts, independent of whether a citation backs it (`confidence`).
+ *
+ * accounting:  follows from how the measures are defined or added up, such as prices deflating
+ *              earnings or interest outlays adding to borrowing.
+ * causal:      a mechanism by which the first indicator moves the second.
+ * association: the two move together; the edge does not claim which causes which.
+ */
+export const KINDS = ["accounting", "causal", "association"] as const;
+export type Kind = (typeof KINDS)[number];
+
+/** Roughly how long the relationship takes to show: months, a year or two, or several years. */
+export const HORIZONS = ["short", "medium", "long"] as const;
+export type Horizon = (typeof HORIZONS)[number];
+
 /** Coarse tiers, so that 0.7 versus 0.8 is never mistaken for a finding. */
 export const STRENGTH_TIERS = [0.25, 0.5, 0.75, 1] as const;
 export type StrengthTier = (typeof STRENGTH_TIERS)[number];
@@ -58,6 +73,11 @@ export interface GraphNode {
   /** ISO date (YYYY-MM-DD) on which the source page was fetched and read. */
   retrievedDate: string | null;
   description: string;
+  /**
+   * Why the node drives nothing, required exactly when no edge leaves it, so that a dead end is a
+   * recorded decision and never an accident of the topology. null when the node drives an edge.
+   */
+  terminal: string | null;
 }
 
 export interface GraphEdge {
@@ -68,6 +88,8 @@ export interface GraphEdge {
   direction: 1 | -1;
   strength: StrengthTier;
   confidence: Confidence;
+  kind: Kind;
+  horizon: Horizon;
   sourceUrl: string | null;
   sourceDetail: string | null;
   retrievedDate: string | null;
@@ -104,7 +126,9 @@ export type ValidationCode =
   | "invalid_direction"
   | "invalid_strength"
   | "invalid_claim"
-  | "forbidden_word";
+  | "forbidden_word"
+  | "terminal_required"
+  | "terminal_forbidden";
 
 export interface ValidationError {
   path: string;

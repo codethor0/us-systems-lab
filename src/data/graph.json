@@ -13,7 +13,8 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/cpi_09112026.htm",
       "sourceDetail": "BLS, Consumer Price Index news release for August 2026 (released 2026-09-11): CPI-U all items, 12 months ending August, not seasonally adjusted. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
-      "description": "Consumer Price Index for All Urban Consumers, all items, 12-month change."
+      "description": "Consumer Price Index for All Urban Consumers, all items, 12-month change.",
+      "terminal": null
     },
     {
       "id": "fed_rate",
@@ -28,7 +29,8 @@
       "sourceUrl": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm",
       "sourceDetail": "FOMC statement, 2026-09-16, approved 12-0: target range raised by 1/4 percentage point to 3-3/4 to 4 percent. The baseline is the midpoint of that range.",
       "retrievedDate": "2026-09-19",
-      "description": "Federal Open Market Committee target range for the federal funds rate."
+      "description": "Federal Open Market Committee target range for the federal funds rate.",
+      "terminal": null
     },
     {
       "id": "mortgage_rate",
@@ -43,7 +45,8 @@
       "sourceUrl": "https://www.freddiemac.com/pmms",
       "sourceDetail": "Freddie Mac Primary Mortgage Market Survey, weekly average as of 2026-09-17: 6.95 percent, up from 6.76 percent the prior week. The page shows the latest weekly reading and will change; the cited value is the 2026-09-17 reading.",
       "retrievedDate": "2026-09-19",
-      "description": "Weekly average 30-year fixed-rate mortgage rate."
+      "description": "Weekly average 30-year fixed-rate mortgage rate.",
+      "terminal": null
     },
     {
       "id": "gdp_growth",
@@ -58,7 +61,8 @@
       "sourceUrl": "https://www.bea.gov/news/2026/gdp-second-estimate-and-corporate-profits-2nd-quarter-2026",
       "sourceDetail": "BEA, GDP (Second Estimate) and Corporate Profits, 2nd Quarter 2026 (released 2026-08-26): real GDP increased at an annual rate of 1.5 percent in Q2; it increased 2.1 percent in Q1. Second estimate, subject to revision.",
       "retrievedDate": "2026-09-19",
-      "description": "Real gross domestic product, quarterly change at an annual rate."
+      "description": "Real gross domestic product, quarterly change at an annual rate.",
+      "terminal": null
     },
     {
       "id": "payrolls_headline",
@@ -73,7 +77,8 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/empsit_09042026.htm",
       "sourceDetail": "BLS, Employment Situation for August 2026 (released 2026-09-04): total nonfarm payroll employment increased by 162,000 in August. First published estimate, which BLS later revises. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
-      "description": "Headline change in total nonfarm payroll employment for the month."
+      "description": "Headline change in total nonfarm payroll employment for the month.",
+      "terminal": "One month's change is too noisy to drive the annual income and poverty measures in this graph, so nothing is modeled downstream."
     },
     {
       "id": "real_avg_hourly_earnings",
@@ -88,7 +93,8 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/realer_09112026.htm",
       "sourceDetail": "BLS, Real Earnings for August 2026 (released 2026-09-11): from August 2025 to August 2026, real average hourly earnings decreased 0.3 percent, seasonally adjusted. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
-      "description": "Change in real average hourly earnings of all employees over 12 months."
+      "description": "Change in real average hourly earnings of all employees over 12 months.",
+      "terminal": null
     },
     {
       "id": "household_debt",
@@ -103,7 +109,8 @@
       "sourceUrl": "https://www.newyorkfed.org/newsevents/news/research/2026/20260811",
       "sourceDetail": "New York Fed, Quarterly Report on Household Debt and Credit, Q2 2026 (press release 2026-08-11): total household debt decreased by $13 billion, 0.1 percent, to $18.8 trillion.",
       "retrievedDate": "2026-09-19",
-      "description": "Total outstanding U.S. household debt at the end of the quarter."
+      "description": "Total outstanding U.S. household debt at the end of the quarter.",
+      "terminal": null
     },
     {
       "id": "savings_rate",
@@ -118,7 +125,8 @@
       "sourceUrl": "https://www.bea.gov/news/2026/personal-income-and-outlays-july-2026",
       "sourceDetail": "BEA, Personal Income and Outlays, July 2026: personal saving was $712.0 billion in July and the personal saving rate, personal saving as a percentage of disposable personal income, was 3.0 percent.",
       "retrievedDate": "2026-09-19",
-      "description": "Personal saving as a share of disposable personal income."
+      "description": "Personal saving as a share of disposable personal income.",
+      "terminal": "Effects of saving on spending and growth are contested and run both ways, so nothing is modeled downstream."
     },
     {
       "id": "federal_debt",
@@ -133,7 +141,8 @@
       "sourceUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?filter=record_date:eq:2026-08-18&fields=record_date,tot_pub_debt_out_amt",
       "sourceDetail": "U.S. Treasury Fiscal Data, Debt to the Penny, record date 2026-08-18: total public debt outstanding $40,047,425,768,420.22, rounded to $40.05 trillion.",
       "retrievedDate": "2026-09-19",
-      "description": "Total public debt outstanding."
+      "description": "Total public debt outstanding.",
+      "terminal": null
     },
     {
       "id": "debt_growth_rate",
@@ -148,7 +157,8 @@
       "sourceUrl": null,
       "sourceDetail": "No value is stored. It would be derived from two Treasury Debt to the Penny readings twelve months apart, which is a calculation and not a fetched figure, so it is left empty until the interface can show the calculation.",
       "retrievedDate": null,
-      "description": "Year-over-year growth in total public debt outstanding."
+      "description": "Year-over-year growth in total public debt outstanding.",
+      "terminal": null
     },
     {
       "id": "net_interest",
@@ -163,7 +173,8 @@
       "sourceUrl": "https://www.cbo.gov/publication/61882",
       "sourceDetail": "CBO, The Budget and Economic Outlook: 2026 to 2036 (2026-02-11), chart 'Total Deficits, Net Outlays for Interest, and Primary Deficits': net interest outlays for 2026 are 3.3 percent of GDP. A projection under laws in place as of January 2026, not an observation. Read from the chart data embedded in the report page; the report's dollar figure for net interest was not read.",
       "retrievedDate": "2026-09-19",
-      "description": "CBO projection of federal net interest outlays as a share of GDP."
+      "description": "CBO projection of federal net interest outlays as a share of GDP.",
+      "terminal": null
     },
     {
       "id": "productivity",
@@ -178,7 +189,8 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/prod2_09032026.htm",
       "sourceDetail": "BLS, Productivity and Costs, second quarter 2026 revised (released 2026-09-03): from the same quarter a year ago, nonfarm business sector labor productivity increased 2.2 percent. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
-      "description": "Nonfarm business sector labor productivity, change from the same quarter a year earlier."
+      "description": "Nonfarm business sector labor productivity, change from the same quarter a year earlier.",
+      "terminal": null
     },
     {
       "id": "median_household_income",
@@ -193,7 +205,8 @@
       "sourceUrl": "https://www.census.gov/library/publications/2026/demo/p60-289.html",
       "sourceDetail": "Census Bureau, Income in the United States: 2025 (P60-289): median household income was $87,460 in 2025, up 2.6 percent from $85,210 in 2024.",
       "retrievedDate": "2026-09-19",
-      "description": "Median annual household income."
+      "description": "Median annual household income.",
+      "terminal": null
     },
     {
       "id": "poverty_rate",
@@ -208,7 +221,8 @@
       "sourceUrl": "https://www.census.gov/library/publications/2026/demo/p60-290.html",
       "sourceDetail": "Census Bureau, Poverty in the United States: 2025 (P60-290): the official poverty rate fell 0.5 percentage points to 10.2 percent; 34.5 million people were in poverty. This is a different report from the income report cited for median household income.",
       "retrievedDate": "2026-09-19",
-      "description": "Share of people below the official poverty threshold."
+      "description": "Share of people below the official poverty threshold.",
+      "terminal": null
     },
     {
       "id": "food_insecurity",
@@ -223,7 +237,8 @@
       "sourceUrl": "https://www.ers.usda.gov/publications/pub-details?pubid=113622",
       "sourceDetail": "USDA Economic Research Service, Household Food Security in the United States in 2024: 86.3 percent of households were food secure all year; the remaining 13.7 percent were food insecure at some time during 2024.",
       "retrievedDate": "2026-09-19",
-      "description": "Share of U.S. households that were food insecure at some time during the year."
+      "description": "Share of U.S. households that were food insecure at some time during the year.",
+      "terminal": "Outcome indicator. The model does not trace effects of food insecurity onward."
     },
     {
       "id": "homelessness",
@@ -238,7 +253,8 @@
       "sourceUrl": "https://www.hud.gov/news/hud-no-26-037",
       "sourceDetail": "HUD press release on the 2025 Annual Homelessness Assessment Report, Part 1 (2026-05-29): 745,652 people were homeless on a single night in January 2025, a 3 percent decrease since 2024. The figure is taken from the press release; the AHAR Part 1 report is the underlying document.",
       "retrievedDate": "2026-09-19",
-      "description": "Point-in-time count of people experiencing homelessness on one night in January."
+      "description": "Point-in-time count of people experiencing homelessness on one night in January.",
+      "terminal": "Outcome indicator. The model does not trace effects of homelessness onward."
     },
     {
       "id": "institutional_confidence",
@@ -253,7 +269,8 @@
       "sourceUrl": "https://news.gallup.com/poll/712436/confidence-institutions-remains-near-time-low.aspx",
       "sourceDetail": "Gallup, 'Confidence in U.S. Institutions Remains Near All-Time Low' (2026-07-13): the share of Americans expressing a great deal or quite a lot of confidence, averaged across 14 core institutions measured each year since 1993, is 27 percent, one point above the record-low average in 2023.",
       "retrievedDate": "2026-09-19",
-      "description": "Gallup average confidence across 14 core U.S. institutions."
+      "description": "Gallup average confidence across 14 core U.S. institutions.",
+      "terminal": "Outcome indicator. Effects of institutional confidence on other indicators are argued but not established well enough to model."
     },
     {
       "id": "media_trust",
@@ -268,7 +285,8 @@
       "sourceUrl": "https://news.gallup.com/poll/695762/trust-media-new-low.aspx",
       "sourceDetail": "Gallup, 'Trust in Media at New Low of 28% in U.S.' (published 2025-10-02): 28 percent, from a poll conducted Sept. 2-16, 2025, the first reading below 30 percent.",
       "retrievedDate": "2026-09-19",
-      "description": "Gallup measure of trust in the mass media."
+      "description": "Gallup measure of trust in the mass media.",
+      "terminal": null
     },
     {
       "id": "hate_crimes",
@@ -283,7 +301,8 @@
       "sourceUrl": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics",
       "sourceDetail": "FBI, 'FBI Releases 2025 Reported Crimes in the Nation Statistics' (2026-08-14): reported hate crime incidents decreased 7.0 percent from 11,404 in 2024 to 10,606 in 2025, using a matched-agency trend dataset. The 10,881 incidents also cited on that page are the total submitted, a different count.",
       "retrievedDate": "2026-09-19",
-      "description": "Reported hate crime incidents in the FBI trend dataset."
+      "description": "Reported hate crime incidents in the FBI trend dataset.",
+      "terminal": "Isolated on purpose. Research on economic conditions and hate crime is mixed, and no relationship into or out of it meets the evidence bar."
     },
     {
       "id": "worker_bargaining_power",
@@ -298,7 +317,8 @@
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "description": "Abstract lever from the solution map. No measured series and no baseline."
+      "description": "Abstract lever from the solution map. No measured series and no baseline.",
+      "terminal": null
     }
   ],
   "edges": [
@@ -309,6 +329,8 @@
       "direction": 1,
       "strength": 0.75,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "short",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -321,6 +343,8 @@
       "direction": -1,
       "strength": 0.5,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "long",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -333,6 +357,8 @@
       "direction": -1,
       "strength": 0.5,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -345,10 +371,12 @@
       "direction": 1,
       "strength": 0.75,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Higher policy rates raise the interest cost of short-term federal borrowing."
+      "claim": "Higher policy rates raise federal interest costs as short-term debt is refinanced, not all at once."
     },
     {
       "id": "fed_rate__savings_rate",
@@ -357,6 +385,8 @@
       "direction": 1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -369,6 +399,8 @@
       "direction": -1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -381,10 +413,12 @@
       "direction": -1,
       "strength": 0.75,
       "confidence": "modeled",
+      "kind": "accounting",
+      "horizon": "short",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "When prices rise faster than wages, real earnings fall; this is close to an accounting identity."
+      "claim": "Real earnings are nominal earnings adjusted for consumer prices, so higher inflation lowers them unless pay keeps pace."
     },
     {
       "id": "inflation__institutional_confidence",
@@ -393,10 +427,12 @@
       "direction": -1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "association",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Higher inflation is commonly argued to erode confidence in institutions."
+      "claim": "Periods of higher inflation are commonly argued to coincide with lower confidence in institutions."
     },
     {
       "id": "gdp_growth__payrolls_headline",
@@ -405,6 +441,8 @@
       "direction": 1,
       "strength": 0.5,
       "confidence": "modeled",
+      "kind": "association",
+      "horizon": "short",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -417,6 +455,8 @@
       "direction": -1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -429,10 +469,12 @@
       "direction": 1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "long",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Higher productivity growth is commonly argued to support real wage growth over time."
+      "claim": "Over long periods, higher productivity growth is commonly argued to support real wage growth; the two can diverge for years."
     },
     {
       "id": "worker_bargaining_power__real_avg_hourly_earnings",
@@ -441,6 +483,8 @@
       "direction": 1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -453,10 +497,12 @@
       "direction": 1,
       "strength": 0.5,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Higher real earnings raise household incomes."
+      "claim": "Pay is the largest part of household income, so higher real earnings tend to raise it; hours worked and household makeup also matter."
     },
     {
       "id": "real_avg_hourly_earnings__savings_rate",
@@ -465,6 +511,8 @@
       "direction": 1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "short",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -477,10 +525,12 @@
       "direction": -1,
       "strength": 0.5,
       "confidence": "modeled",
+      "kind": "association",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Rising median incomes tend to accompany lower poverty."
+      "claim": "Rising median incomes tend to accompany lower poverty, though poverty depends on the bottom of the income distribution, not the middle."
     },
     {
       "id": "poverty_rate__food_insecurity",
@@ -489,10 +539,12 @@
       "direction": 1,
       "strength": 0.5,
       "confidence": "modeled",
+      "kind": "association",
+      "horizon": "short",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Higher poverty tends to accompany more food insecurity."
+      "claim": "Food insecurity is far more common among households in poverty; the two are associated, not identical."
     },
     {
       "id": "poverty_rate__homelessness",
@@ -501,6 +553,8 @@
       "direction": 1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "association",
+      "horizon": "long",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
@@ -513,10 +567,12 @@
       "direction": -1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "causal",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Higher debt service is commonly argued to reduce saving."
+      "claim": "Higher debt payments are commonly argued to reduce saving; total debt is only a rough stand-in for the payment burden."
     },
     {
       "id": "federal_debt__net_interest",
@@ -525,10 +581,12 @@
       "direction": 1,
       "strength": 0.75,
       "confidence": "modeled",
+      "kind": "accounting",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "A larger debt stock raises interest outlays, other things equal."
+      "claim": "A larger debt stock raises interest outlays, other things equal; interest is paid mainly on the part held by the public, at rates that reset as debt matures."
     },
     {
       "id": "media_trust__institutional_confidence",
@@ -537,10 +595,40 @@
       "direction": 1,
       "strength": 0.25,
       "confidence": "modeled",
+      "kind": "association",
+      "horizon": "medium",
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
-      "claim": "Lower media trust is commonly argued to lower trust in other institutions."
+      "claim": "Trust in the mass media tends to move with confidence in other institutions."
+    },
+    {
+      "id": "net_interest__debt_growth_rate",
+      "from": "net_interest",
+      "to": "debt_growth_rate",
+      "direction": 1,
+      "strength": 0.5,
+      "confidence": "modeled",
+      "kind": "accounting",
+      "horizon": "short",
+      "sourceUrl": null,
+      "sourceDetail": null,
+      "retrievedDate": null,
+      "claim": "Interest outlays add to the deficit, which is financed by borrowing, so higher interest raises debt growth, other things equal."
+    },
+    {
+      "id": "debt_growth_rate__federal_debt",
+      "from": "debt_growth_rate",
+      "to": "federal_debt",
+      "direction": 1,
+      "strength": 0.75,
+      "confidence": "modeled",
+      "kind": "accounting",
+      "horizon": "short",
+      "sourceUrl": null,
+      "sourceDetail": null,
+      "retrievedDate": null,
+      "claim": "Faster debt growth raises the debt stock; the growth rate is the change in that stock."
     }
   ]
 }

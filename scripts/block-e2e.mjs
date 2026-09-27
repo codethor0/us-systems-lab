@@ -17,7 +17,7 @@ requireCheck(
   "Oracle requires review: propagation defaults changed",
 );
 requireCheck(
-  graph.nodes.length === 20 && graph.edges.length === 20,
+  graph.nodes.length === 20 && graph.edges.length === 22,
   "Graph inventory changed; review required",
 );
 const expectedBuild = /BLOCK_BUILD\s*=\s*["']([^"']+)/.exec(

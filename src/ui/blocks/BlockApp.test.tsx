@@ -299,8 +299,10 @@ describe("URL synchronization under rapid input", () => {
 });
 
 describe("review regressions", () => {
+  // debt_growth_rate and gdp_growth stay unset: both reach net_interest through the federal debt
+  // loop, and setting them would move its exact total away from 1.
   const EXACT_ONE_SCENARIO =
-    "debt_growth_rate:-70,fed_rate:80,federal_debt:40,food_insecurity:70,gdp_growth:-60,hate_crimes:40," +
+    "fed_rate:80,federal_debt:40,food_insecurity:70,hate_crimes:40," +
     "homelessness:-30,household_debt:60,inflation:80,institutional_confidence:-20,media_trust:10," +
     "median_household_income:-100,mortgage_rate:50,net_interest:10,payrolls_headline:-50," +
     "poverty_rate:-60,productivity:70,savings_rate:90,worker_bargaining_power:20";

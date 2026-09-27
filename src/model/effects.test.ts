@@ -133,7 +133,7 @@ describe("two levers add before the clamp", () => {
    *   median_household_income:  fed 0.091875 (E2, E7, E13), worker 0.0875      total 0.179375
    *   poverty_rate: only worker reaches it within 3 hops: -0.030625
    *   fed_rate and worker_bargaining_power: own 1 each, nothing reaches them.
-   * Fourteen nodes are listed: the 11 fed_rate reaches, poverty_rate, and the two levers.
+   * Fifteen nodes are listed: the 12 fed_rate reaches, poverty_rate, and the two levers.
    */
   const real = parseGraph(graphJson);
   const effects = combineEffects(real, levers({ fed_rate: 1, worker_bargaining_power: 1 }));
@@ -142,6 +142,7 @@ describe("two levers add before the clamp", () => {
     expect(effects.map((e) => e.nodeId)).toEqual([
       "debt_growth_rate",
       "fed_rate",
+      "federal_debt",
       "gdp_growth",
       "household_debt",
       "inflation",

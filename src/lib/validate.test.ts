@@ -24,6 +24,7 @@ function fixture(): RawGraph {
     sourceDetail: null,
     retrievedDate: null,
   };
+  const terminal = "Fixture: nothing downstream is modeled.";
   return {
     nodes: [
       {
@@ -39,6 +40,7 @@ function fixture(): RawGraph {
         sourceUrl: "https://www.bls.gov/fixture/cpi",
         sourceDetail: "Fixture: CPI release, table 1",
         retrievedDate: "2026-09-19",
+        terminal: terminal,
         description: "Fixture node.",
       },
       {
@@ -54,6 +56,7 @@ function fixture(): RawGraph {
         sourceUrl: "https://news.example.com/fixture/fomc",
         sourceDetail: "Fixture: news report of the decision",
         retrievedDate: "2026-09-19",
+        terminal: null,
         description: "Fixture node.",
       },
       {
@@ -69,6 +72,7 @@ function fixture(): RawGraph {
         sourceUrl: null,
         sourceDetail: "Fixture: primary page not yet located",
         retrievedDate: null,
+        terminal: terminal,
         description: "Fixture node.",
       },
       {
@@ -76,6 +80,7 @@ function fixture(): RawGraph {
         label: "Worker bargaining power",
         category: "institutional",
         ...index,
+        terminal: null,
         description: "Fixture lever.",
       },
       {
@@ -83,6 +88,7 @@ function fixture(): RawGraph {
         label: "Spare lever",
         category: "policy",
         ...index,
+        terminal: terminal,
         description: "Fixture lever referenced by no edge.",
       },
     ],
@@ -94,6 +100,8 @@ function fixture(): RawGraph {
         direction: -1,
         strength: 0.5,
         confidence: "empirical",
+        kind: "causal",
+        horizon: "medium",
         sourceUrl: "https://www.federalreserve.gov/fixture/paper",
         sourceDetail: "Fixture: working paper",
         retrievedDate: "2026-09-19",
@@ -106,6 +114,8 @@ function fixture(): RawGraph {
         direction: 1,
         strength: 0.25,
         confidence: "modeled",
+        kind: "association",
+        horizon: "long",
         sourceUrl: null,
         sourceDetail: null,
         retrievedDate: null,
@@ -205,6 +215,8 @@ describe("validateGraph: rejects, edges", () => {
 
   it("an edge whose source does not exist", () => {
     const g = withEdge("fed_rate__inflation", { from: "nope", id: "nope__inflation" });
+    // fed_rate no longer drives anything, so it states why; only the dangling reference remains.
+    Object.assign(find(g.nodes, "fed_rate"), { terminal: "Fixture." });
     expect(summarize(g)).toEqual([["edges[0].from", "dangling_reference"]]);
   });
 
@@ -214,6 +226,9 @@ describe("validateGraph: rejects, edges", () => {
       to: "inflation",
       id: "inflation__inflation",
     });
+    // Keep the terminal rule satisfied, so the self loop is the only fault.
+    Object.assign(find(g.nodes, "fed_rate"), { terminal: "Fixture." });
+    Object.assign(find(g.nodes, "inflation"), { terminal: null });
     expect(summarize(g)).toEqual([["edges[0]", "self_loop"]]);
   });
 
@@ -572,6 +587,63 @@ describe("validateGraph: rejects, wrong types", () => {
   it("an infinite baseline", () => {
     expect(summarize(withNode("inflation", { baseline: Number.POSITIVE_INFINITY }))).toEqual([
       ["nodes[0].baseline", "invalid_type"],
+    ]);
+  });
+});
+
+describe("validateGraph: relationship kind, horizon and terminal nodes", () => {
+  it("accepts every kind and horizon, sourced or modeled", () => {
+    for (const kind of ["accounting", "causal", "association"]) {
+      for (const horizon of ["short", "medium", "long"]) {
+        expect(summarize(withEdge("fed_rate__inflation", { kind, horizon }))).toEqual([]);
+        expect(
+          summarize(withEdge("worker_bargaining_power__inflation", { kind, horizon })),
+        ).toEqual([]);
+      }
+    }
+  });
+
+  it("rejects a kind outside the three allowed", () => {
+    expect(summarize(withEdge("fed_rate__inflation", { kind: "correlation" }))).toEqual([
+      ["edges[0].kind", "invalid_enum"],
+    ]);
+  });
+
+  it("rejects a missing kind or horizon", () => {
+    const g = fixture();
+    const edge = find(g.edges, "fed_rate__inflation");
+    delete edge["kind"];
+    delete edge["horizon"];
+    expect(summarize(g)).toEqual([
+      ["edges[0].kind", "invalid_type"],
+      ["edges[0].horizon", "invalid_type"],
+    ]);
+  });
+
+  it("rejects a horizon outside the three allowed", () => {
+    expect(summarize(withEdge("fed_rate__inflation", { horizon: "instant" }))).toEqual([
+      ["edges[0].horizon", "invalid_enum"],
+    ]);
+  });
+
+  it("requires a stated reason on a node with no outgoing relationship", () => {
+    expect(summarize(withNode("spare_lever", { terminal: null }))).toEqual([
+      ["nodes[4].terminal", "terminal_required"],
+    ]);
+    expect(summarize(withNode("inflation", { terminal: "  " }))).toEqual([
+      ["nodes[0].terminal", "terminal_required"],
+    ]);
+  });
+
+  it("rejects a terminal reason on a node that drives another", () => {
+    expect(summarize(withNode("fed_rate", { terminal: "Not really." }))).toEqual([
+      ["nodes[1].terminal", "terminal_forbidden"],
+    ]);
+  });
+
+  it("rejects a terminal reason that is not a string or null", () => {
+    expect(summarize(withNode("spare_lever", { terminal: 7 }))).toEqual([
+      ["nodes[4].terminal", "invalid_type"],
     ]);
   });
 });
