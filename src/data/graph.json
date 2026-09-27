@@ -13,6 +13,7 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/cpi_09112026.htm",
       "sourceDetail": "BLS, Consumer Price Index news release for August 2026 (released 2026-09-11): CPI-U all items, 12 months ending August, not seasonally adjusted. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
+      "cadence": "monthly",
       "description": "Consumer Price Index for All Urban Consumers, all items, 12-month change.",
       "terminal": null
     },
@@ -29,6 +30,7 @@
       "sourceUrl": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20260916a.htm",
       "sourceDetail": "FOMC statement, 2026-09-16, approved 12-0: target range raised by 1/4 percentage point to 3-3/4 to 4 percent. The baseline is the midpoint of that range.",
       "retrievedDate": "2026-09-19",
+      "cadence": "irregular",
       "description": "Federal Open Market Committee target range for the federal funds rate.",
       "terminal": null
     },
@@ -45,6 +47,7 @@
       "sourceUrl": "https://www.freddiemac.com/pmms",
       "sourceDetail": "Freddie Mac Primary Mortgage Market Survey, weekly average as of 2026-09-17: 6.95 percent, up from 6.76 percent the prior week. The page shows the latest weekly reading and will change; the cited value is the 2026-09-17 reading.",
       "retrievedDate": "2026-09-19",
+      "cadence": "weekly",
       "description": "Weekly average 30-year fixed-rate mortgage rate.",
       "terminal": null
     },
@@ -61,6 +64,7 @@
       "sourceUrl": "https://www.bea.gov/news/2026/gdp-second-estimate-and-corporate-profits-2nd-quarter-2026",
       "sourceDetail": "BEA, GDP (Second Estimate) and Corporate Profits, 2nd Quarter 2026 (released 2026-08-26): real GDP increased at an annual rate of 1.5 percent in Q2; it increased 2.1 percent in Q1. Second estimate, subject to revision.",
       "retrievedDate": "2026-09-19",
+      "cadence": "quarterly",
       "description": "Real gross domestic product, quarterly change at an annual rate.",
       "terminal": null
     },
@@ -77,6 +81,7 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/empsit_09042026.htm",
       "sourceDetail": "BLS, Employment Situation for August 2026 (released 2026-09-04): total nonfarm payroll employment increased by 162,000 in August. First published estimate, which BLS later revises. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
+      "cadence": "monthly",
       "description": "Headline change in total nonfarm payroll employment for the month.",
       "terminal": "One month's change is too noisy to drive the annual income and poverty measures in this graph, so nothing is modeled downstream."
     },
@@ -93,6 +98,7 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/realer_09112026.htm",
       "sourceDetail": "BLS, Real Earnings for August 2026 (released 2026-09-11): from August 2025 to August 2026, real average hourly earnings decreased 0.3 percent, seasonally adjusted. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
+      "cadence": "monthly",
       "description": "Change in real average hourly earnings of all employees over 12 months.",
       "terminal": null
     },
@@ -109,6 +115,7 @@
       "sourceUrl": "https://www.newyorkfed.org/newsevents/news/research/2026/20260811",
       "sourceDetail": "New York Fed, Quarterly Report on Household Debt and Credit, Q2 2026 (press release 2026-08-11): total household debt decreased by $13 billion, 0.1 percent, to $18.8 trillion.",
       "retrievedDate": "2026-09-19",
+      "cadence": "quarterly",
       "description": "Total outstanding U.S. household debt at the end of the quarter.",
       "terminal": null
     },
@@ -125,6 +132,7 @@
       "sourceUrl": "https://www.bea.gov/news/2026/personal-income-and-outlays-july-2026",
       "sourceDetail": "BEA, Personal Income and Outlays, July 2026: personal saving was $712.0 billion in July and the personal saving rate, personal saving as a percentage of disposable personal income, was 3.0 percent.",
       "retrievedDate": "2026-09-19",
+      "cadence": "monthly",
       "description": "Personal saving as a share of disposable personal income.",
       "terminal": "Effects of saving on spending and growth are contested and run both ways, so nothing is modeled downstream."
     },
@@ -141,6 +149,7 @@
       "sourceUrl": "https://api.fiscaldata.treasury.gov/services/api/fiscal_service/v2/accounting/od/debt_to_penny?filter=record_date:eq:2026-08-18&fields=record_date,tot_pub_debt_out_amt",
       "sourceDetail": "U.S. Treasury Fiscal Data, Debt to the Penny, record date 2026-08-18: total public debt outstanding $40,047,425,768,420.22, rounded to $40.05 trillion.",
       "retrievedDate": "2026-09-19",
+      "cadence": "daily",
       "description": "Total public debt outstanding.",
       "terminal": null
     },
@@ -157,6 +166,7 @@
       "sourceUrl": null,
       "sourceDetail": "No value is stored. It would be derived from two Treasury Debt to the Penny readings twelve months apart, which is a calculation and not a fetched figure, so it is left empty until the interface can show the calculation.",
       "retrievedDate": null,
+      "cadence": "daily",
       "description": "Year-over-year growth in total public debt outstanding.",
       "terminal": null
     },
@@ -173,6 +183,7 @@
       "sourceUrl": "https://www.cbo.gov/publication/61882",
       "sourceDetail": "CBO, The Budget and Economic Outlook: 2026 to 2036 (2026-02-11), chart 'Total Deficits, Net Outlays for Interest, and Primary Deficits': net interest outlays for 2026 are 3.3 percent of GDP. A projection under laws in place as of January 2026, not an observation. Read from the chart data embedded in the report page; the report's dollar figure for net interest was not read.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "CBO projection of federal net interest outlays as a share of GDP.",
       "terminal": null
     },
@@ -189,6 +200,7 @@
       "sourceUrl": "https://www.bls.gov/news.release/archives/prod2_09032026.htm",
       "sourceDetail": "BLS, Productivity and Costs, second quarter 2026 revised (released 2026-09-03): from the same quarter a year ago, nonfarm business sector labor productivity increased 2.2 percent. Read through a fetch tool because BLS blocks scripted requests.",
       "retrievedDate": "2026-09-19",
+      "cadence": "quarterly",
       "description": "Nonfarm business sector labor productivity, change from the same quarter a year earlier.",
       "terminal": null
     },
@@ -205,6 +217,7 @@
       "sourceUrl": "https://www.census.gov/library/publications/2026/demo/p60-289.html",
       "sourceDetail": "Census Bureau, Income in the United States: 2025 (P60-289): median household income was $87,460 in 2025, up 2.6 percent from $85,210 in 2024.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Median annual household income.",
       "terminal": null
     },
@@ -221,6 +234,7 @@
       "sourceUrl": "https://www.census.gov/library/publications/2026/demo/p60-290.html",
       "sourceDetail": "Census Bureau, Poverty in the United States: 2025 (P60-290): the official poverty rate fell 0.5 percentage points to 10.2 percent; 34.5 million people were in poverty. This is a different report from the income report cited for median household income.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Share of people below the official poverty threshold.",
       "terminal": null
     },
@@ -237,6 +251,7 @@
       "sourceUrl": "https://www.ers.usda.gov/publications/pub-details?pubid=113622",
       "sourceDetail": "USDA Economic Research Service, Household Food Security in the United States in 2024: 86.3 percent of households were food secure all year; the remaining 13.7 percent were food insecure at some time during 2024.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Share of U.S. households that were food insecure at some time during the year.",
       "terminal": "Outcome indicator. The model does not trace effects of food insecurity onward."
     },
@@ -253,6 +268,7 @@
       "sourceUrl": "https://www.hud.gov/news/hud-no-26-037",
       "sourceDetail": "HUD press release on the 2025 Annual Homelessness Assessment Report, Part 1 (2026-05-29): 745,652 people were homeless on a single night in January 2025, a 3 percent decrease since 2024. The figure is taken from the press release; the AHAR Part 1 report is the underlying document.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Point-in-time count of people experiencing homelessness on one night in January.",
       "terminal": "Outcome indicator. The model does not trace effects of homelessness onward."
     },
@@ -269,6 +285,7 @@
       "sourceUrl": "https://news.gallup.com/poll/712436/confidence-institutions-remains-near-time-low.aspx",
       "sourceDetail": "Gallup, 'Confidence in U.S. Institutions Remains Near All-Time Low' (2026-07-13): the share of Americans expressing a great deal or quite a lot of confidence, averaged across 14 core institutions measured each year since 1993, is 27 percent, one point above the record-low average in 2023.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Gallup average confidence across 14 core U.S. institutions.",
       "terminal": "Outcome indicator. Effects of institutional confidence on other indicators are argued but not established well enough to model."
     },
@@ -285,6 +302,7 @@
       "sourceUrl": "https://news.gallup.com/poll/695762/trust-media-new-low.aspx",
       "sourceDetail": "Gallup, 'Trust in Media at New Low of 28% in U.S.' (published 2025-10-02): 28 percent, from a poll conducted Sept. 2-16, 2025, the first reading below 30 percent.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Gallup measure of trust in the mass media.",
       "terminal": null
     },
@@ -301,6 +319,7 @@
       "sourceUrl": "https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics",
       "sourceDetail": "FBI, 'FBI Releases 2025 Reported Crimes in the Nation Statistics' (2026-08-14): reported hate crime incidents decreased 7.0 percent from 11,404 in 2024 to 10,606 in 2025, using a matched-agency trend dataset. The 10,881 incidents also cited on that page are the total submitted, a different count.",
       "retrievedDate": "2026-09-19",
+      "cadence": "annual",
       "description": "Reported hate crime incidents in the FBI trend dataset.",
       "terminal": "Isolated on purpose. Research on economic conditions and hate crime is mixed, and no relationship into or out of it meets the evidence bar."
     },
@@ -317,6 +336,7 @@
       "sourceUrl": null,
       "sourceDetail": null,
       "retrievedDate": null,
+      "cadence": null,
       "description": "Abstract lever from the solution map. No measured series and no baseline.",
       "terminal": null
     }

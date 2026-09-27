@@ -23,6 +23,7 @@ function fixture(): RawGraph {
     sourceUrl: null,
     sourceDetail: null,
     retrievedDate: null,
+    cadence: null,
   };
   const terminal = "Fixture: nothing downstream is modeled.";
   return {
@@ -40,6 +41,7 @@ function fixture(): RawGraph {
         sourceUrl: "https://www.bls.gov/fixture/cpi",
         sourceDetail: "Fixture: CPI release, table 1",
         retrievedDate: "2026-09-19",
+        cadence: "monthly",
         terminal: terminal,
         description: "Fixture node.",
       },
@@ -56,6 +58,7 @@ function fixture(): RawGraph {
         sourceUrl: "https://news.example.com/fixture/fomc",
         sourceDetail: "Fixture: news report of the decision",
         retrievedDate: "2026-09-19",
+        cadence: "monthly",
         terminal: null,
         description: "Fixture node.",
       },
@@ -72,6 +75,7 @@ function fixture(): RawGraph {
         sourceUrl: null,
         sourceDetail: "Fixture: primary page not yet located",
         retrievedDate: null,
+        cadence: "monthly",
         terminal: terminal,
         description: "Fixture node.",
       },
@@ -644,6 +648,32 @@ describe("validateGraph: relationship kind, horizon and terminal nodes", () => {
   it("rejects a terminal reason that is not a string or null", () => {
     expect(summarize(withNode("spare_lever", { terminal: 7 }))).toEqual([
       ["nodes[4].terminal", "invalid_type"],
+    ]);
+  });
+});
+
+describe("validateGraph: cadence", () => {
+  it("accepts every cadence on a measured node and null on an abstract lever", () => {
+    for (const cadence of ["daily", "weekly", "monthly", "quarterly", "annual", "irregular"]) {
+      expect(summarize(withNode("inflation", { cadence }))).toEqual([]);
+    }
+  });
+
+  it("requires a cadence on observed and projected nodes", () => {
+    expect(summarize(withNode("inflation", { cadence: null }))).toEqual([
+      ["nodes[0].cadence", "cadence_mismatch"],
+    ]);
+    expect(summarize(withNode("net_interest", { cadence: null }))).toEqual([
+      ["nodes[2].cadence", "cadence_mismatch"],
+    ]);
+  });
+
+  it("rejects a cadence on an index node and an unknown cadence", () => {
+    expect(summarize(withNode("spare_lever", { cadence: "weekly" }))).toEqual([
+      ["nodes[4].cadence", "cadence_mismatch"],
+    ]);
+    expect(summarize(withNode("inflation", { cadence: "hourly" }))).toEqual([
+      ["nodes[0].cadence", "invalid_enum"],
     ]);
   });
 });

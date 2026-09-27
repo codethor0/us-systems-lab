@@ -22,6 +22,7 @@ function node(overrides: Partial<GraphNode> = {}): GraphNode {
     sourceUrl: "https://example.com",
     sourceDetail: "Example",
     retrievedDate: "2026-09-19",
+    cadence: "monthly",
     description: "A sample node.",
     terminal: null,
     ...overrides,

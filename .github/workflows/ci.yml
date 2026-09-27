@@ -99,3 +99,8 @@ jobs:
         # without failing the job, so main stays green until the next change.
         continue-on-error: ${{ github.event_name == 'schedule' }}
         run: npm audit --audit-level=low
+      - name: Report baseline freshness
+        # Offline and deterministic: reads graph.json and the date, fetches nothing, and writes a
+        # table of baselines that may have a newer release to the job summary. It never fails.
+        if: github.event_name == 'schedule'
+        run: npm run check:freshness

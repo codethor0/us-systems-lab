@@ -1,4 +1,5 @@
 import {
+  CADENCES,
   CATEGORIES,
   CONFIDENCES,
   HORIZONS,
@@ -48,6 +49,7 @@ const NODE_KEYS = [
   "sourceUrl",
   "sourceDetail",
   "retrievedDate",
+  "cadence",
   "description",
   "terminal",
 ];
@@ -345,6 +347,7 @@ function validateNode(raw: unknown, index: number, seen: Set<string>, report: Re
   }
 
   checkSource(raw, path, mode, report);
+  checkCadence(raw, path, valueType, report);
   checkKeys(raw, NODE_KEYS, path, report);
 }
 
@@ -416,6 +419,21 @@ function validateEdge(
   else if (confidence === "modeled") mode = "forbidden";
   checkSource(raw, path, mode, report);
   checkKeys(raw, EDGE_KEYS, path, report);
+}
+
+/** Measured and projected nodes say how often they are published; an abstract lever does not. */
+function checkCadence(raw: Raw, path: string, valueType: string | undefined, report: Report): void {
+  const cadence = raw["cadence"];
+  if (cadence === null) {
+    if (valueType === "observed" || valueType === "projected") {
+      report(join(path, "cadence"), "cadence_mismatch", `${valueType} nodes need a cadence`);
+    }
+    return;
+  }
+  const value = readEnum(raw, "cadence", CADENCES, path, report);
+  if (value !== undefined && valueType === "index") {
+    report(join(path, "cadence"), "cadence_mismatch", "index nodes are not published");
+  }
 }
 
 /** A node states why it drives nothing exactly when no edge leaves it. */

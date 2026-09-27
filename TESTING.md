@@ -88,6 +88,10 @@ whether those assumptions are true of the economy.
 Automated rules catch only part of WCAG, so the axe-core scan is
 not an accessibility certification.
 
+`npm run check:freshness` reports baselines that may have a newer release. It is offline and
+deterministic, runs on the weekly schedule in CI, writes to the job summary and never fails the
+run. It flags likely staleness from each node's cadence; it does not check any value.
+
 `npm run check:sources` produces a best-effort external source reachability report. It needs
 network access and is not part of `verify` or CI. A 2xx or 3xx response counts as reachable. The
 report does not establish source validity, accuracy, or currency; read the source itself.

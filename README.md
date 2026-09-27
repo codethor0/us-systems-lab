@@ -200,6 +200,10 @@ and not an observation.
 | Trust in media                   | 28%                              | Sep 2025    | [Gallup, Trust in Media](https://news.gallup.com/poll/695762/trust-media-new-low.aspx)                                                                                                                      |
 | Reported hate crimes             | 10,606 reported incidents        | 2025        | [FBI, 2025 Reported Crimes in the Nation](https://www.fbi.gov/news/press-releases/fbi-releases-2025-reported-crimes-in-the-nation-statistics)                                                               |
 
+Each node records how often its figure is published. `npm run check:freshness`, which also runs
+weekly in CI, lists the baselines that may have a newer release. It is a reminder to read the
+source, not a check of any value. [CONTRIBUTING.md](CONTRIBUTING.md) describes how to refresh one.
+
 Two nodes have no baseline. `worker_bargaining_power` is an abstract 0-to-100 lever.
 `debt_growth_rate` is a rate that would be derived from two Treasury readings a year apart, and a
 derived number is computed where it is shown and not stored as though it had been fetched.
