@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Live site](https://img.shields.io/badge/live-us--systems--lab.codethor0.workers.dev-2f6fb7.svg)](https://us-systems-lab.codethor0.workers.dev/)
 
-**[Try it live](https://us-systems-lab.codethor0.workers.dev/)** — no install, no signup.
+**[Try it live](https://us-systems-lab.codethor0.workers.dev/).** No install, no signup.
 
 An interactive block board of U.S. economic and social indicators. Each indicator is a tile of 100
 squares. Move one input and watch the tiles it is connected to gain or lose squares and change color.
@@ -26,25 +26,26 @@ squares. Move one input and watch the tiles it is connected to gain or lose squa
 - Every tile starts at **50 out of 100** in neutral grey, labeled **Not adjusted**. The 50 is a
   display convention that leaves room to move both up and down. It is not a health rating.
 - Set **your input** for a tile with its slider, or click a square. Inputs move in steps of five.
-- The squares and **Combined response (automatic)** bar show the tile's **combined result**: your input plus the effects that reach it from
-  other inputs, over paths of up to three relationships. The automatic bar shows a continuous position,
-  while squares are rounded. Displayed results never become new inputs.
+- The squares and the **Combined response (automatic)** bar show the tile's **combined result**:
+  your input plus the effects that reach it from other inputs over paths of up to three
+  relationships. The bar is continuous; the squares are rounded. Results never feed back in as
+  inputs.
 - Color shows level: grey at 50, blue below, orange above. Blue and orange stay distinguishable
   with the common forms of color blindness. Color does not show worse to better: a higher federal
   debt is not a better one.
 - The page follows the system light or dark setting.
 - Open **Why & source** on a tile for the paths behind its result, the relationships it belongs to,
   and the stored baseline with its source. A stored baseline does not change with your input.
-- **Reset** returns every tile to 50. **Share** shows a link that reproduces your inputs.
+- **Reset** returns every tile to 50. **Share** shows a link that reproduces your inputs, and
+  **Copy link** copies it.
 - Tiles pulse briefly, at most once a second, when their result changes. The checkbox in the header
   and the system reduced-motion setting turn the pulse off without hiding results.
 
 The display position is `50 + 50 x score`, where the score is the model's final result clamped to
 -1 to 1. Squares are rounded symmetrically around 50, so scores of +0.25 and -0.25 show 63 and 37
-squares. Machine-roundoff-sized half-block errors and cancellation residue are corrected
-only in presentation; the underlying model result remains unchanged. A real response smaller
-than one square still shows its signed score, using scientific notation rather than a false zero
-when necessary.
+squares. Floating-point noise, such as effects that cancel to 1e-17 instead of 0, is cleaned up
+for display only; the model result itself is not changed. A real response smaller than one square
+still shows its signed score, in scientific notation if needed, rather than a false zero.
 
 ## What moves what
 
@@ -60,11 +61,9 @@ and follows the rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 Early. Built and tested: the data model and its validator, a graph with cited starting values, the
 propagation logic, the Block Board interface, real-Chrome browser tests, and the repository's
-automated checks, including an axe-core scan for WCAG 2.2 A and AA rules in light and dark mode
-on every CI run.
-[DEPLOYMENT.md](DEPLOYMENT.md)
-records the hosting decision and steps, and [TESTING.md](TESTING.md) records what each check does and
-does not establish.
+automated checks, including an axe-core scan for WCAG 2.2 A and AA rules in light and dark mode on
+every CI run. [DEPLOYMENT.md](DEPLOYMENT.md) records the hosting decision and steps, and
+[TESTING.md](TESTING.md) records what each check does and does not establish.
 
 ## How to read the labels: empirical and modeled
 
@@ -165,13 +164,13 @@ npm run verify
 npm run dev
 ```
 
-`npm run verify` runs the same checks as continuous integration: lint, type check, format check,
-tests with a 100 percent coverage threshold for the core model plus the pure display helpers, a
-production build, the script tests, the emoji check, and the independent numerical audit
-(`npm run test:math`). Continuous integration also runs
-`npm run test:e2e`, which drives the built board in real Chrome, and audits dependencies. Use
-`npm run dev` for the local Vite server, `npm run build` for the static production bundle, and
-`npm run preview` to serve that bundle locally. [TESTING.md](TESTING.md) has the details.
+`npm run verify` runs lint, type check, format check, tests with a 100 percent coverage threshold
+for the core model and the pure display helpers, a production build, the script tests, the emoji
+and attribution checks, and the independent numerical audit (`npm run test:math`). Continuous
+integration also runs `npm run test:e2e`, which drives the built board in real Chrome, and audits
+dependencies. Use `npm run dev` for the local Vite server, `npm run build` for the static production
+bundle, and `npm run preview` to serve that bundle locally. [TESTING.md](TESTING.md) has the
+details.
 
 ## Contributing, license and deployment
 

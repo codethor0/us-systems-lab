@@ -1,79 +1,18 @@
 # Testing
 
-US Systems Lab is tested as a static browser application (the Block Board) and as a deterministic directed-graph model.
+The project is tested at three levels: the model and helpers in unit tests, the numbers against an
+independent implementation, and the built page in real Chrome.
 
-## Supported local release environment
+## Environment
 
-The deployment release target is:
-
-- Node.js 24.18.0
-- npm 10.9.2
-
-The repository pins the Node version in `.nvmrc` and locks JavaScript dependencies in `package-lock.json`.
-
-## Clean install
-
-Start from a clean checkout or clean staged release candidate:
+Releases use Node.js 24.18.0 (pinned in `.nvmrc`) and npm 10.9.2. Dependencies are locked in
+`package-lock.json`. Install from the lockfile and do not regenerate it during routine checks:
 
 ```sh
 npm ci
 ```
 
-Do not replace the lockfile during routine verification.
-
-## Full verification
-
-Run the complete repository verification gate:
-
-```sh
-npm run verify
-```
-
-This covers linting, TypeScript checks, formatting, unit and repository-contract tests, tracked coverage, the production build, Python script tests, repository text hygiene, and the independent numerical audit (`npm run test:math`).
-
-## Production browser verification
-
-The deeper browser harness requires Google Chrome or Chromium:
-
-```sh
-npm run test:e2e
-```
-
-The browser test builds the production bundle and drives the Block Board in real Chrome. For all 20 indicators at both signed extremes, and at 1440, 390 and 320 pixel widths, it compares every tile's rendered square count with independent arithmetic (`scripts/block-oracle.mjs`). It also checks multi-input composition, source links, scenario URL reload and normalization, reset, browser history, keyboard, pointer and touch input, reduced motion, and that a deliberately broken downstream tile makes the suite fail.
-
-## Independent numerical checks
-
-`npm run test:math` checks the production propagation/effects functions against a separately
-implemented exact-rational path enumeration. It covers 420 single-input grid scenarios,
-760 signed pairs, and 500 deterministic multi-input scenarios (1,680 scenarios and 33,600
-indicator comparisons). It checks raw and clamped results, whole-block rounding, displayed
-direction and color (including cancellation roundoff), input-order
-independence, and a deliberately reversed propagation sign in a temporary compiled copy.
-No production model source is mutated. Set `USL_MATH_REPORT=1` to write its
-machine-readable report to the fixed ignored path `.artifacts/math/model-audit.json`.
-
-The browser suite additionally exercises all 420 single-input grid positions at desktop
-width, beyond its 120 signed viewport cases. It checks the actual automatic bar width,
-marker position, color, accessible meter value, and squares against the exact-rational oracle.
-Frozen automatic bars and incorrect colors must fail the same verifier. An open share field
-must update when browser history returns to a neutral scenario. The expected source build
-identifier must match the page being tested.
-
-These checks establish implementation consistency with editorial assumptions, not empirical
-causal validity. The 100 percent coverage threshold applies to the configured core and pure
-helper scope, not every DOM-renderer line; component and browser checks cover the active UI.
-
-## What changes require additional evidence
-
-Data changes should keep source URLs, retrieval dates, value type, units, and as-of information consistent.
-
-Model changes should preserve directed semantics. A relationship must not be treated as reversible unless a separate reverse edge is explicitly defined. Modeled and empirical relationships must remain distinguishable.
-
-Changes to URL encoding, propagation, the block display, deployment configuration, dependency policy, or browser behavior should include regression coverage for the changed contract.
-
 ## Before opening a pull request
-
-Run the relevant focused tests while developing, then run:
 
 ```sh
 npm run verify
@@ -81,35 +20,80 @@ npm run test:e2e
 npm audit --audit-level=low
 ```
 
-Do not include generated build output, credentials, local machine paths, private logs, or unrelated artifacts in the pull request.
+CI runs the same checks, one step each, on every pull request, every push to `main`, and once a
+week on a schedule. The weekly run catches breakage from a runner or dependency change without a
+push.
 
-## Verification layers and limits
+The audit runs twice. Advisories in the runtime dependencies (React and React DOM, which ship in
+the site) always fail the run. Advisories in build and test tools fail pull requests and pushes,
+but on the weekly run they show as a failed step without failing the job, so `main` stays green
+until the next change fixes them.
 
-`npm run verify` is the deterministic source and repository gate. It covers linting, type checks, formatting, unit and repository-contract tests, tracked coverage, the production build, Python script tests, text hygiene, and the independent numerical audit. It does not launch a browser.
+## `npm run verify`
 
-`npm run test:e2e` is the production-browser layer. CI runs the same deterministic component checks as `npm run verify`, then the browser E2E gate and `npm audit --audit-level=low` under Node.js 24.18.0 and npm 10.9.2.
+Lint, type check, format check, unit and repository tests with coverage, the production build, the
+Python script tests, the emoji and attribution checks, and the numerical audit. It does not start a
+browser.
 
-Run `npm run check:sources` only when an operator intentionally wants the best-effort external source reachability report. It needs network access and is not part of `npm run verify` or CI. It treats only HTTP 2xx and 3xx responses as reachable. Network failures and HTTP 4xx or 5xx responses are reported as unsuccessful reachability, but the report is diagnostic: it does not establish source validity, factual correctness, or currency, and it is not a substitute for reviewing the cited primary source.
+The 100 percent coverage threshold applies to the core model and the pure display helpers, not to
+every line of DOM rendering. Component and browser tests cover the rest of the interface.
 
-`npm run test:e2e` also runs an axe-core scan for WCAG 2.2 A and AA rules in light and dark mode, at neutral and with a lever raised, with every "Why & source" panel open. A button with no accessible name is added at the end as a control and must be reported. Automated rules catch only part of WCAG, so this is not an accessibility certification.
+## `npm run test:math`
 
-## Rapid input and address-bar synchronization
+Checks the production propagation and effects code against a separate exact-rational path
+enumeration: 420 single-input grid scenarios, 760 signed pairs, and 500 multi-input scenarios, for
+1,680 scenarios and 33,600 indicator comparisons. It compares raw and clamped results, whole-block
+rounding, displayed direction and color, and input-order independence. As a control, it reverses a
+propagation sign in a temporary compiled copy and requires the audit to catch it. No source file is
+changed.
 
-The blocks, automatic response meters, counts, and Share field update immediately.
-Only address-bar writes are coalesced: the latest scenario is written no more than
-once every 400 milliseconds while inputs change rapidly. Reset replaces queued
-input with the neutral scenario. Loading browser history and unmounting cancel
-older queued work. A rejected or silently ignored History API write is reported
-and retried a bounded number of times; Share continues to use the current model.
+`USL_MATH_REPORT=1` writes a machine-readable report to `.artifacts/math/model-audit.json`.
 
-The browser test waits for the actual canonical URL rather than a fixed delay.
-It checks all 20 reset inputs, the neutral response, disabled Reset state, cleared
-notices, and empty query. A separate 250-event native-keyboard burst is intentionally
-unpaced: the renderer must remain immediate and the final reset URL must stay clear.
-Browser navigation-throttling warnings fail the run. The URL scheduler is included
-in the existing 100 percent helper coverage gate. Browser protections are not disabled.
+## `npm run test:e2e`
 
-Two browser checks queue a write inside a single browser task, assert that the write is
-pending, and then require an immediate Reset and a history navigation to a neutral scenario
-to win over it. A last input made within about 400 milliseconds of closing or reloading the
-tab may not reach the address bar; Share always shows the current scenario.
+Requires Google Chrome or Chromium. Builds the production bundle and drives the Block Board:
+
+- Every indicator at both extremes, at 1440, 390 and 320 pixel widths, compared square by square
+  against `scripts/block-oracle.mjs`.
+- All 420 single-input grid positions at desktop width, checking bar width, marker position, color,
+  the accessible meter value, and squares.
+- Multiple inputs together, source links, Share links, reload, Reset, browser history, keyboard,
+  pointer and touch input, and reduced motion.
+- A deliberately broken tile, which must make the suite fail.
+- An axe-core scan for WCAG 2.2 A and AA rules in light and dark mode, at neutral and with a
+  lever raised, with every "Why & source" panel open. A button with no accessible name is added
+  at the end as a control and must be reported.
+
+The page's build identifier must match the source being tested.
+
+## Address-bar updates
+
+The board, meters, counts and Share field update immediately. Writes to the address bar are
+limited to one every 400 milliseconds. Reset and history navigation cancel queued writes. A failed
+or ignored History API write is retried a few times; Share always uses the current inputs. An input
+made less than 400 milliseconds before closing the tab may not reach the address bar.
+
+The browser suite checks this with a 250-key burst, a pending write that Reset and history
+navigation must override, and a check that the browser reports no navigation throttling.
+
+## What the checks do not establish
+
+The checks show that the code matches the model's stated assumptions. They say nothing about
+whether those assumptions are true of the economy.
+
+Automated rules catch only part of WCAG, so the axe-core scan is
+not an accessibility certification.
+
+`npm run check:sources` produces a best-effort external source reachability report. It needs
+network access and is not part of `verify` or CI. A 2xx or 3xx response counts as reachable. The
+report does not establish source validity, accuracy, or currency; read the source itself.
+
+## Changes that need more evidence
+
+- Data changes keep source URL, retrieval date, value type, units, and as-of period consistent.
+- Model changes keep edges one-way. A reverse relationship needs its own edge. Modeled and empirical
+  edges stay distinct.
+- Changes to URL encoding, propagation, the block display, deployment configuration, dependency
+  policy, or browser behavior come with a regression test for that behavior.
+
+Do not include build output, credentials, local paths, or private logs in a pull request.
