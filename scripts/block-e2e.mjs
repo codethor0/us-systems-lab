@@ -222,6 +222,68 @@ async function accessibilityScan() {
   await cdp.send("Emulation.setEmulatedMedia", { features: [] });
   report.assertions.push("axe negative control detected");
 }
+async function analysisTools() {
+  // Category filter, cited-only mode and scenario A change the view, never the address bar.
+  for (const [width, height] of [
+    [1440, 1000],
+    [390, 844],
+    [320, 740],
+  ]) {
+    await session.viewport(width, height);
+    await session.navigate("/?l=fed_rate:100");
+    await waitForScenario([["fed_rate", 1]], `tools ${width}`);
+    const query = (await snapshot()).query;
+    const view = async () =>
+      await cdp.evaluate(`(() => ({
+        hidden: [...document.querySelectorAll('[data-indicator]')].filter((t) => t.hidden).map((t) => t.dataset.indicator),
+        mortgage: document.querySelector('[data-indicator="mortgage_rate"]').dataset.state,
+        compare: document.querySelector('[data-indicator="mortgage_rate"] .bb-compare'),
+        compareText: document.querySelector('[data-indicator="mortgage_rate"] .bb-compare').textContent,
+        compareHidden: document.querySelector('[data-indicator="mortgage_rate"] .bb-compare').hidden,
+        scroll: document.documentElement.scrollWidth,
+        query: location.search,
+      }))()`);
+    await cdp.click('input[name="bb-category"][value="fiscal"]');
+    let state = await view();
+    requireCheck(
+      state.hidden.length === 17 && !state.hidden.includes("federal_debt"),
+      `category filter ${width}: ${JSON.stringify(state.hidden)}`,
+    );
+    requireCheck(state.scroll <= width + 1, `category filter ${width}: horizontal overflow`);
+    requireCheck(state.query === query, `category filter ${width} changed the address`);
+    await cdp.click('input[name="bb-category"][value="all"]');
+    await cdp.click('[data-action="evidence-only"]');
+    state = await view();
+    requireCheck(state.mortgage === "idle", `evidence-only ${width} used a modeled edge`);
+    requireCheck(state.query === query, `evidence-only ${width} changed the address`);
+    await cdp.click('[data-action="evidence-only"]');
+    requireCheck((await view()).mortgage === "up", `evidence-only ${width} did not switch back`);
+    await cdp.click('[data-action="save-a"]');
+    await cdp.click("#block-input-fed_rate");
+    await cdp.key("End");
+    await cdp.key("Home");
+    state = await view();
+    requireCheck(
+      !state.compareHidden && state.compareText === "Scenario A 87.5, now 12.5 (-75).",
+      `scenario A ${width}: ${state.compareText}`,
+    );
+    requireCheck(state.scroll <= width + 1, `scenario A ${width}: horizontal overflow`);
+    await cdp.click('[data-action="clear-a"]');
+    requireCheck((await view()).compareHidden, `scenario A ${width} did not clear`);
+  }
+  await session.viewport(1440, 1000);
+  await session.navigate("/?l=fed_rate:100");
+  await cdp.evaluate("document.querySelectorAll('.bb-details').forEach(d=>{d.open=true})");
+  await cdp.click('[data-action="save-a"]');
+  await cdp.click('input[name="bb-category"][value="economic"]');
+  await cdp.click('[data-action="evidence-only"]');
+  const violations = await axeViolations();
+  requireCheck(
+    violations.length === 0,
+    `axe with view tools active: ${JSON.stringify(violations)}`,
+  );
+  report.assertions.push("category filter, cited-only mode and scenario A at 1440, 390 and 320");
+}
 async function run() {
   for (const [width, height] of [
     [1440, 1000],
@@ -624,6 +686,7 @@ async function run() {
     sources.every((source) => source.width >= 24 && source.height >= 24),
     "source link pointer targets are below 24px",
   );
+  await analysisTools();
   await accessibilityScan();
   const failures = session.failures;
   requireCheck(

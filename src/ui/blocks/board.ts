@@ -1,13 +1,19 @@
-import type { Graph, GraphNode } from "../../lib/schema";
+import { CATEGORIES } from "../../lib/schema";
+import type { Category, Graph, GraphNode } from "../../lib/schema";
 import { DEFAULT_PARAMS } from "../../lib/propagation";
 import { createUrlSync } from "./url-sync";
+import { compareDeltas } from "../../model/analysis";
+import type { NodeSensitivity } from "../../model/analysis";
 import type { ScenarioEffect } from "../../model/effects";
 import {
   blockPosition,
+  compareText,
   fillColor,
   inputLever,
   levelText,
   movedText,
+  relationshipBadge,
+  sensitivityText,
   signed,
   summaryText,
 } from "./view";
@@ -17,7 +23,17 @@ export interface LoadedBoard {
   readonly warnings: readonly string[];
 }
 export interface BoardServices {
-  readonly calculate: (levers: ReadonlyMap<string, number>) => readonly ScenarioEffect[];
+  /** evidenceOnly runs the same engine on the cited relationships alone. */
+  readonly calculate: (
+    levers: ReadonlyMap<string, number>,
+    evidenceOnly: boolean,
+  ) => readonly ScenarioEffect[];
+  /** The same scenario under the tested settings; see src/model/analysis.ts. */
+  readonly sensitivity: (
+    levers: ReadonlyMap<string, number>,
+    evidenceOnly: boolean,
+  ) => ReadonlyMap<string, NodeSensitivity>;
+  readonly sensitivitySettings: number;
   readonly load: (search: string) => LoadedBoard;
   readonly location: (levers: ReadonlyMap<string, number>) => string;
   readonly baseline: (node: GraphNode) => string;
@@ -57,6 +73,12 @@ interface Tile {
   readonly input: HTMLInputElement;
   readonly inputValue: HTMLElement;
   readonly why: HTMLElement;
+  readonly robustness: HTMLElement;
+  readonly compare: HTMLElement;
+  /** The "Directly drives" note, and its text for every relationship and for cited ones only. */
+  readonly feeds: HTMLElement | null;
+  readonly feedsAll: string;
+  readonly feedsCited: string;
   readonly numbers: HTMLElement;
   readonly paths: HTMLElement;
   readonly clear: HTMLButtonElement;
@@ -75,6 +97,12 @@ export function mountBlockBoard(
   let warnings = [...initial.warnings];
   let lastAction = "Not adjusted. Move an input to begin.";
   let destroyed = false;
+  let evidenceOnly = false;
+  let shownCategory: Category | "all" = "all";
+  /** Scenario A: display scores saved in memory only, never in the address bar. */
+  let saved: { deltas: Map<string, number>; evidenceOnly: boolean } | null = null;
+  let currentDeltas = new Map<string, number>();
+  const citedCount = graph.edges.filter((edge) => edge.confidence === "empirical").length;
   const labels = new Map(graph.nodes.map((node) => [node.id, node.label]));
   const edges = new Map(graph.edges.map((edge) => [edge.id, edge]));
   const container = element("div", "bb-app");
@@ -183,6 +211,58 @@ export function mountBlockBoard(
     ),
     scale,
   );
+  const tools = element("section", "bb-tools");
+  tools.setAttribute("aria-label", "View options");
+  const filter = element("fieldset", "bb-filter");
+  filter.append(element("legend", "", "Show"));
+  for (const option of ["all", ...CATEGORIES] as const) {
+    const label = element("label", "bb-choice");
+    const radio = element("input");
+    radio.type = "radio";
+    radio.name = "bb-category";
+    radio.value = option;
+    radio.checked = option === "all";
+    radio.addEventListener("change", () => {
+      shownCategory = option;
+      update();
+    });
+    label.append(radio, document.createTextNode(option === "all" ? "All indicators" : option));
+    filter.append(label);
+  }
+  const evidenceLabel = element("label", "bb-choice");
+  const evidence = element("input");
+  evidence.type = "checkbox";
+  evidence.dataset.action = "evidence-only";
+  evidence.addEventListener("change", () => {
+    evidenceOnly = evidence.checked;
+    lastAction = evidenceOnly
+      ? "Showing cited relationships only."
+      : "Showing every reviewed relationship.";
+    update();
+  });
+  evidenceLabel.append(evidence, document.createTextNode("Cited relationships only"));
+  const saveA = button("Save as scenario A", () => {
+    saved = { deltas: currentDeltas, evidenceOnly };
+    lastAction = "Saved the current results as scenario A.";
+    update();
+  });
+  saveA.dataset.action = "save-a";
+  const clearA = button("Clear A", () => {
+    saved = null;
+    lastAction = "Cleared scenario A.";
+    update();
+    saveA.focus();
+  });
+  clearA.dataset.action = "clear-a";
+  const compareGroup = element("div", "bb-compare-actions");
+  compareGroup.append(saveA, clearA);
+  const toolNotes = element("div", "bb-tool-notes");
+  const filterNote = element("p", "");
+  const evidenceNote = element("p", "");
+  const compareNote = element("p", "");
+  toolNotes.append(filterNote, evidenceNote, compareNote);
+  tools.append(filter, evidenceLabel, compareGroup, toolNotes);
+
   const info = element(
     "p",
     "bb-disclaimer",
@@ -237,11 +317,22 @@ export function mountBlockBoard(
     const title = element("h2", "", node.label);
     title.id = `bb-title-${node.id}`;
     tileRoot.append(element("p", "bb-category", node.category), title);
+    tileRoot.append(
+      element(
+        "p",
+        "bb-baseline",
+        node.valueType === "index"
+          ? "Real-world value: none (abstract 0 to 100 lever)"
+          : node.baseline === null
+            ? "Real-world baseline: not stored yet"
+            : `Real-world ${node.valueType === "projected" ? "projection" : "baseline"}: ${services.baseline(node)}${node.asOf === null ? "" : ` (${node.asOf})`}`,
+      ),
+    );
     const readout = element("div", "bb-readout");
     const grid = element("div", "bb-grid");
     grid.setAttribute("role", "img");
     grid.title =
-      "Blocks show the combined result. Click a block to set your manual input, or use the slider below.";
+      "Blocks show the normalized model response, not the real-world value. Click a block to set your manual input, or use the slider below.";
     const squares: HTMLElement[] = [];
     for (let row = 9; row >= 0; row--) {
       for (let col = 1; col <= 10; col++) {
@@ -263,7 +354,7 @@ export function mountBlockBoard(
     const status = element("p", "bb-state");
     const change = element("p", "bb-change");
     result.append(
-      element("p", "bb-micro", "COMBINED RESULT"),
+      element("p", "bb-micro", "MODEL RESPONSE"),
       value,
       element("span", "bb-denominator", " / 100"),
       status,
@@ -271,11 +362,15 @@ export function mountBlockBoard(
     );
     readout.append(grid, result);
     tileRoot.append(readout);
-    const responseCaption = element("p", "bb-response-caption", "Combined response (automatic)");
+    const responseCaption = element(
+      "p",
+      "bb-response-caption",
+      "Model response, normalized 0 to 100 (automatic)",
+    );
     const response = element("div", "bb-response-track");
     response.dataset.autoResponse = node.id;
     response.setAttribute("role", "meter");
-    response.setAttribute("aria-label", `${node.label} combined modeled response`);
+    response.setAttribute("aria-label", `${node.label} normalized model response`);
     response.setAttribute("aria-valuemin", "0");
     response.setAttribute("aria-valuemax", "100");
     const responseFill = element("span", "bb-response-fill");
@@ -316,6 +411,9 @@ export function mountBlockBoard(
     );
     controlNote.id = `bb-control-note-${node.id}`;
     const why = element("p", "bb-why");
+    const robustness = element("p", "bb-robustness");
+    const compare = element("p", "bb-compare");
+    compare.hidden = true;
     const clear = button(
       "Neutral",
       () => {
@@ -325,7 +423,7 @@ export function mountBlockBoard(
     );
     clear.setAttribute("aria-label", `Neutral: clear input for ${node.label}`);
     inputRow.append(clear);
-    tileRoot.append(inputRow, input, ticks, controlNote, why);
+    tileRoot.append(inputRow, input, ticks, controlNote, why, robustness, compare);
     // Static connectivity note: what this indicator can move directly, before any input is set.
     const drives = [
       ...new Set(
@@ -334,9 +432,23 @@ export function mountBlockBoard(
           .map((edge) => labels.get(edge.to) ?? edge.to),
       ),
     ];
+    const citedDrives = [
+      ...new Set(
+        graph.edges
+          .filter((edge) => edge.from === node.id && edge.confidence === "empirical")
+          .map((edge) => labels.get(edge.to) ?? edge.to),
+      ),
+    ];
     tileRoot.dataset.drives = String(drives.length);
+    let feeds: HTMLElement | null = null;
+    const feedsAll = `Directly drives: ${drives.join(", ")}.`;
+    const feedsCited =
+      citedDrives.length > 0
+        ? `Directly drives through cited relationships: ${citedDrives.join(", ")}.`
+        : "Drives nothing through cited relationships; its links are modeled.";
     if (drives.length > 0) {
-      tileRoot.append(element("p", "bb-feeds", `Directly drives: ${drives.join(", ")}.`));
+      feeds = element("p", "bb-feeds", feedsAll);
+      tileRoot.append(feeds);
     } else if (graph.edges.some((edge) => edge.to === node.id)) {
       tileRoot.append(
         element(
@@ -350,7 +462,8 @@ export function mountBlockBoard(
     const details = element("details", "bb-details");
     details.append(element("summary", "", "Why & source"));
     const numbers = element("p", "bb-explanation");
-    const paths = element("div", "bb-paths");
+    const paths = element("ol", "bb-paths");
+    paths.setAttribute("aria-label", `Paths into ${node.label}, strongest first`);
     details.append(numbers, paths);
     const metadata = element(
       "p",
@@ -369,19 +482,20 @@ export function mountBlockBoard(
       details.append(element("p", "bb-source-detail", node.sourceDetail));
     const connected = graph.edges.filter((edge) => edge.from === node.id || edge.to === node.id);
     if (connected.length === 0)
-      details.append(
-        element("p", "", "No modeled connections. This indicator is intentionally isolated."),
-      );
+      details.append(element("p", "", `No modeled connections. ${node.terminal ?? ""}`.trim()));
     else {
+      if (node.terminal !== null)
+        details.append(element("p", "bb-terminal", `Drives nothing: ${node.terminal}`));
       const list = element("ul");
       for (const edge of connected) {
-        list.append(
-          element(
-            "li",
-            "",
-            `${labels.get(edge.from) ?? edge.from} > ${labels.get(edge.to) ?? edge.to}: ${edge.direction > 0 ? "positive" : "negative"}, weight ${String(edge.strength)}, ${edge.confidence}. ${edge.claim}`,
+        const item = element("li");
+        item.append(
+          element("span", "bb-badge", relationshipBadge(edge)),
+          document.createTextNode(
+            ` ${labels.get(edge.from) ?? edge.from} > ${labels.get(edge.to) ?? edge.to}: ${edge.direction > 0 ? "positive" : "negative"}, weight ${String(edge.strength)}. ${edge.claim}`,
           ),
         );
+        list.append(item);
       }
       details.append(list);
     }
@@ -404,6 +518,11 @@ export function mountBlockBoard(
       input,
       inputValue,
       why,
+      robustness,
+      compare,
+      feeds,
+      feedsAll,
+      feedsCited,
       numbers,
       paths,
       clear,
@@ -473,7 +592,7 @@ export function mountBlockBoard(
   const summary = element("section", "bb-summary");
   summary.setAttribute("aria-label", "Board summary");
   summary.append(info, counts);
-  container.append(header, shareBox, legend, summary, message, notice, board, footer);
+  container.append(header, shareBox, legend, tools, summary, message, notice, board, footer);
   root.replaceChildren(container);
 
   const linkNotice = element("p", "bb-notice");
@@ -512,8 +631,16 @@ export function mountBlockBoard(
 
   function update(): void {
     if (destroyed) return;
-    const effects = new Map(services.calculate(levers).map((effect) => [effect.nodeId, effect]));
+    const effects = new Map(
+      services.calculate(levers, evidenceOnly).map((effect) => [effect.nodeId, effect]),
+    );
+    const robust = services.sensitivity(levers, evidenceOnly);
+    const active = evidenceOnly
+      ? graph.edges.filter((edge) => edge.confidence === "empirical")
+      : graph.edges;
+    const deltas = new Map<string, number>();
     let responding = 0;
+    let shown = 0;
     for (const tile of tiles) {
       const effect = effects.get(tile.node.id);
       const own = levers.get(tile.node.id) ?? 0;
@@ -525,6 +652,9 @@ export function mountBlockBoard(
         delta === 0 &&
         !(effect?.contributions.some((item) => item.value !== 0) ?? false);
       if (delta !== 0) responding++;
+      deltas.set(tile.node.id, delta);
+      tile.root.hidden = shownCategory !== "all" && tile.node.category !== shownCategory;
+      if (!tile.root.hidden) shown++;
       tile.root.dataset.delta = String(rawDelta);
       tile.root.dataset.displayDelta = String(delta);
       tile.root.dataset.own = String(own);
@@ -582,21 +712,42 @@ export function mountBlockBoard(
           ? `Affected by ${contributors.map((id) => labels.get(id) ?? id).join(", ")}.`
           : own !== 0
             ? "Your manual input."
-            : graph.edges.some((edge) => edge.to === tile.node.id)
+            : active.some((edge) => edge.to === tile.node.id)
               ? `No input reaches this tile within ${String(DEFAULT_PARAMS.maxHops)} relationships.`
-              : "No incoming relationships; only your own input moves this tile.";
+              : evidenceOnly && graph.edges.some((edge) => edge.to === tile.node.id)
+                ? "No cited relationship reaches this tile. That is a gap in citations, not evidence of no effect."
+                : "No incoming relationships; only your own input moves this tile.";
       if (!graph.edges.some((edge) => edge.from === tile.node.id || edge.to === tile.node.id))
         tile.why.textContent = "No modeled connections.";
       tile.numbers.textContent = `Manual ${signed(own)}; incoming ${signed(effect?.propagated ?? 0)}; total ${signed(effect?.total ?? 0)}; clamped score ${signed(delta)}. Display position = 50 + 50 x score. Whole blocks are rounded symmetrically; calculations keep full precision.`;
+      if (tile.feeds !== null)
+        tile.feeds.textContent = evidenceOnly ? tile.feedsCited : tile.feedsAll;
+      const entry = robust.get(tile.node.id);
+      tile.robustness.textContent =
+        entry === undefined || idle ? "" : sensitivityText(entry, services.sensitivitySettings);
+      tile.compare.hidden = saved === null;
+      tile.compare.textContent =
+        saved === null ? "" : compareText(saved.deltas.get(tile.node.id) ?? 0, delta);
       tile.paths.replaceChildren();
-      for (const item of effect?.contributions ?? []) {
-        if (item.value === 0) continue;
+      // Strongest first; the sort is stable, so ties keep the deterministic traversal order.
+      const routes = [...(effect?.contributions ?? [])]
+        .filter((item) => item.value !== 0)
+        .sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
+      for (const item of routes) {
         const route = [labels.get(item.sourceId) ?? item.sourceId];
+        const steps: string[] = [];
         for (const id of item.edgeIds) {
           const edge = edges.get(id);
-          if (edge !== undefined) route.push(labels.get(edge.to) ?? edge.to);
+          if (edge === undefined) continue;
+          route.push(labels.get(edge.to) ?? edge.to);
+          steps.push(`${edge.direction > 0 ? "up" : "down"} (${relationshipBadge(edge)})`);
         }
-        tile.paths.append(element("p", "", `${route.join(" > ")}: ${signed(item.value)}`));
+        const row = element("li");
+        row.append(
+          element("span", "", `${route.join(" > ")}: ${signed(item.value)}`),
+          element("span", "bb-steps", `Each step: ${steps.join("; ")}`),
+        );
+        tile.paths.append(row);
       }
       if (
         delta !== tile.delta &&
@@ -610,6 +761,21 @@ export function mountBlockBoard(
       }
       tile.delta = delta;
     }
+    currentDeltas = deltas;
+    filterNote.textContent =
+      shownCategory === "all"
+        ? ""
+        : `Showing ${String(shown)} of ${String(graph.nodes.length)} indicators. Hidden tiles still take part in the calculation.`;
+    evidenceNote.textContent = !evidenceOnly
+      ? ""
+      : `Cited relationships only: ${String(citedCount)} of ${String(graph.edges.length)} relationships have a citation.${citedCount === 0 ? " None do yet, so no input reaches another tile in this view." : ""} Share links carry inputs only and open with every relationship.`;
+    if (saved === null) compareNote.textContent = "";
+    else {
+      const { changed } = compareDeltas([...deltas.keys()], saved.deltas, deltas);
+      compareNote.textContent = `Comparing with scenario A${saved.evidenceOnly === evidenceOnly ? "" : ", saved in the other relationship view"}: ${String(changed)} of ${String(graph.nodes.length)} tiles differ. A is kept in this tab only.`;
+    }
+    clearA.hidden = saved === null;
+    board.dataset.evidenceOnly = String(evidenceOnly);
     reset.disabled = levers.size === 0 && warnings.length === 0 && window.location.search === "";
     counts.textContent = summaryText(graph.nodes.length, levers.size, responding);
     message.textContent = `${lastAction} ${movedText(responding)}`;

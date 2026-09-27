@@ -1,3 +1,5 @@
+import type { NodeSensitivity } from "../../model/analysis";
+
 /** Display coordinates only. Never feed calculated block counts back into the model. */
 export interface BlockPosition {
   readonly position: number;
@@ -88,4 +90,40 @@ export function summaryText(indicators: number, inputs: number, moved: number): 
 
 export function movedText(moved: number): string {
   return `${count(moved, "tile", "tiles")} moved.`;
+}
+
+/** One line on how a tile's direction holds up across the tested settings. Empty when it never moves. */
+export function sensitivityText(entry: NodeSensitivity, settings: number): string {
+  const low = levelText(50 + 50 * entry.min);
+  const high = levelText(50 + 50 * entry.max);
+  const range = low === high ? "" : `; position ${low} to ${high}`;
+  if (entry.robustness === "robust")
+    return `Same direction under all ${String(settings)} tested settings${range}.`;
+  if (entry.robustness === "partial")
+    return `Moves under some tested settings only, usually the longer path limits${range}.`;
+  if (entry.robustness === "direction") return `Direction depends on the settings${range}.`;
+  return "";
+}
+
+/** A tile's position in saved scenario A against the current one, on the 0 to 100 display scale. */
+export function compareText(a: number, b: number): string {
+  const before = 50 + 50 * a;
+  const after = 50 + 50 * b;
+  // Same tolerance as compareDeltas, on the 0 to 100 scale, so a tile shown as "no change" is never
+  // counted as different.
+  const change = Math.abs(b - a) < 1e-12 ? 0 : after - before;
+  const note = change === 0 ? "no change" : signed(change);
+  return `Scenario A ${levelText(before)}, now ${levelText(after)} (${note}).`;
+}
+
+const KIND_LABELS = { accounting: "Accounting", causal: "Causal", association: "Association" };
+
+/** What a relationship asserts, whether a citation backs it, and how long it takes. */
+export function relationshipBadge(edge: {
+  readonly kind: keyof typeof KIND_LABELS;
+  readonly confidence: "empirical" | "modeled";
+  readonly horizon: "short" | "medium" | "long";
+}): string {
+  const cited = edge.confidence === "empirical" ? "cited" : "modeled";
+  return `${KIND_LABELS[edge.kind]} | ${cited} | ${edge.horizon} run`;
 }
