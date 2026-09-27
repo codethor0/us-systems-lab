@@ -6,6 +6,7 @@
  * numbers the README states about the graph must match graph.json, every citation must appear,
  * and the contribution rules must name every value the schema accepts.
  */
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -240,6 +241,26 @@ describe("CONTRIBUTING: process", () => {
 
   it("says that hate_crimes has no edges on purpose", () => {
     expect(contributingText).toContain("hate_crimes");
+  });
+});
+
+describe("house style", () => {
+  const markdown = execFileSync("git", ["ls-files", "*.md", ".github/*.md"], {
+    cwd: root,
+    encoding: "utf8",
+  })
+    .split("\n")
+    .filter((file) => file !== "");
+
+  it("finds the tracked Markdown files", () => {
+    expect(markdown).toContain("README.md");
+  });
+
+  it.each(markdown)("%s uses no em or en dashes", (file) => {
+    const lines = read(file)
+      .split("\n")
+      .flatMap((line, index) => (/[\u2013\u2014]/.test(line) ? [index + 1] : []));
+    expect(lines, `${file} has a dash on lines ${lines.join(", ")}`).toEqual([]);
   });
 });
 

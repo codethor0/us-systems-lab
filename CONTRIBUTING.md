@@ -1,12 +1,11 @@
 # Contributing
 
-Thank you for helping. This project is a small, careful piece of data plus a small, carefully
-tested piece of arithmetic. Most contributions are either a new indicator (a node), a new
-relationship (an edge), or a correction to one of them. The rules below exist because the whole
-value of the project is that a reader is never told more than the data supports.
+This project is a small data file and a small, tested piece of arithmetic. Most contributions are
+a new indicator (a node), a new relationship (an edge), or a correction to one of them. The rules
+below exist so that a reader is never told more than the data supports.
 
-Read [README.md](README.md) first. It explains the project, and it states plainly that this is an
-illustrative model and not a forecast.
+Read [README.md](README.md) first. It explains the project and states that this is an illustrative
+model, not a forecast.
 
 ## The hard rule: empirical and modeled edges
 
@@ -85,20 +84,18 @@ How to verify a starting value:
   any commit whose author is not listed in `.github/allowed-authors`, and any co-author trailer or
   tool credit in a commit message or pull request description. To propose a change, open an issue
   or a pull request with the change described; if it is accepted, the maintainer commits it.
-- Run `npm run verify`. It runs lint, type check, format check, the tests with a 100 percent
-  coverage threshold for `src/lib`, the script tests, and the emoji check. Continuous integration
-  runs the same checks and also audits dependencies.
+- Run `npm run verify` and `npm run test:e2e`. [TESTING.md](TESTING.md) lists what each one
+  checks. Continuous integration runs the same checks and also audits dependencies.
 - For a change to logic, write the test first and watch it fail. In `src/lib`, every branch must be
   covered by a test that can fail, so do not add a test that only exercises code.
 - Keep to one topic per pull request. Say what you read, and when.
 - Write commit messages in the Conventional Commits style: `feat:`, `fix:`, `docs:` or `chore:`.
 - **No emoji anywhere**: not in code, comments, commit messages, documents or interface text.
   `npm run check:emoji` finds them.
-- **Signed commits.** The `main` branch requires signed commits. GitHub also checks the commits on
-  your pull request branch, and its documentation says an unsigned commit there can block a squash
-  merge even though GitHub signs the final commit. See
+- **Signed commits.** The `main` branch requires signed commits, and an unsigned commit on a pull
+  request branch can block a squash merge. See
   [About protected branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches).
-  Sign your commits, or tell a maintainer if you cannot.
+  This is one reason the maintainer makes the final commit.
 
 ## Reporting a problem with the data
 

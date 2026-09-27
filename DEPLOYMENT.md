@@ -1,15 +1,13 @@
 # Deployment
 
-The repository is configured for Cloudflare Workers Static Assets. `wrangler.jsonc`
-uses `dist/`, SPA fallback, and `run_worker_first: false`. There is no Worker
-application script, database, runtime secret, or server-side API. `public/_headers`
-is copied into the Vite build. Repository configuration does not establish that
-the corresponding version is deployed or that its live checks have passed.
+The site is a static build served by Cloudflare Workers Static Assets. `wrangler.jsonc` points at
+`dist/`, uses SPA fallback, and sets `run_worker_first: false`. There is no Worker script,
+database, runtime secret, or server-side API. Vite copies `public/_headers` into the build.
 
-## Release environment and gates
+## Release gates
 
-Use Node.js 24.18.0 from `.nvmrc` and npm 10.9.2 from `packageManager`.
-Reproduce the exact candidate from its lockfile in a clean environment:
+Use Node.js 24.18.0 (`.nvmrc`) and npm 10.9.2 (`packageManager`). From a clean checkout of the
+release commit:
 
 ```sh
 npm ci
@@ -18,76 +16,53 @@ npm run test:e2e
 npm audit --audit-level=low
 ```
 
-`verify` includes the independent numerical audit. `test:e2e` builds the production
-site and exercises the Block Board against the actual model. See [TESTING.md](TESTING.md)
-for coverage scope and assurance limits. Keep screenshots, logs, private audit
-instructions, and signing material outside the public repository.
+`verify` includes the independent numerical audit. `test:e2e` builds the production site and
+drives the Block Board in real Chrome. [TESTING.md](TESTING.md) describes what each check covers.
 
-A failed test, unresolved reproducible regression, stale source snapshot, wrong
-build identifier, or failed audit blocks publication. Do not reduce thresholds,
-remove tests that still cover active behavior, or deploy first and validate later.
+Any failed check, unresolved regression, stale source data, wrong build identifier, or failed
+audit blocks the release. Do not lower thresholds or remove tests that still cover active
+behavior. Keep screenshots, logs, and signing material out of the repository.
 
-## Signed source and GitHub
+## Source control
 
-The owner reviews the exact diff and creates the cryptographically signed commit.
-Do not change the owner's Git identity or signing configuration. Push a reviewed
-feature branch, obtain review, and require successful CI for the exact release
-commit before it enters protected `main`. Do not force-push, auto-merge, or accept
-an unsigned release-history commit.
+Every commit on `main` is signed by the owner and arrives through a pull request with a passing
+`verify` check. No force-pushes and no auto-merge.
 
-The GitHub Actions workflow verifies code; it deploys nothing. Merging to `main`
-does not change production either: after pull request 10 merged on 2026-09-24
-(UTC), the live site kept serving the previous build until the owner deployed
-manually more than two hours later. Branch protection and explicit release review
-are the gates before code reaches the production branch; a manual deployment is
-the separate step that publishes it.
+CI verifies code and deploys nothing. Merging to `main` does not change production; a manual
+deploy does.
 
 ## Cloudflare configuration
 
-Use the existing Worker named `us-systems-lab`; its name must match the configuration.
-The build command is `npm run build`; the deploy command uses the locally pinned
-Wrangler version, `npx --no-install wrangler deploy`. Do not add a Worker script,
-server-side services, paid storage, or new credentials for this static release.
-Review current Cloudflare plan and billing settings before changing infrastructure;
-no paid service or surprise metered runtime is part of this project's design.
+The Worker is named `us-systems-lab` and must match `wrangler.jsonc`. Build with `npm run build`
+and deploy with the pinned Wrangler: `npx --no-install wrangler deploy`. Do not add a Worker
+script, server-side service, paid storage, or new credentials. Check the Cloudflare plan and
+billing settings before changing infrastructure; the project uses no paid or metered service.
 
-Deployment is manual. Before deploying, check what production serves: if it
-already serves the exact approved build, do not deploy a second, different local
-candidate over it. Otherwise deploy only from the clean, signed, verified release
-checkout, authenticated locally. A change that leaves the built files identical,
-such as tooling, tests, or documentation, needs no deployment. If a Cloudflare
-Workers Builds integration is connected later, update this section, and do not
-treat a successful Cloudflare build as proof that GitHub's verification job
-succeeded. Never paste account tokens or signing keys into source, logs, or audit
-bundles.
+Deployment is manual. Deploy only from a clean, signed, verified checkout of `main`. If production
+already serves that exact build, do not deploy again. Changes that leave the built files
+unchanged, such as tooling, tests, or documentation, need no deploy. If Cloudflare Workers Builds
+is connected later, update this section; a successful Cloudflare build does not mean GitHub CI
+passed. Never put account tokens or signing keys in source or logs.
 
 ## Live verification and rollback
 
-Record the previously active Cloudflare version before publication. Keep it
-available for rollback. After publication, verify the displayed Block Board build
-identifier and the served HTML, JavaScript, CSS, and favicon against the approved
-build. An old open preview tab is not production verification.
+Before deploying, record the active Cloudflare version so it can be restored. After deploying,
+confirm that the build identifier on the page and the served HTML, JavaScript, CSS, and favicon
+match the release build. An old open tab is not verification.
 
-Run the same browser contract against the canonical production HTTPS address from the
-verified checkout:
+Run the browser suite against production from the release checkout:
 
 ```sh
 USL_E2E_PRODUCTION=1 npm run test:e2e
 ```
 
-The production switch does not accept a URL. The browser harness maps it to the canonical
-US Systems Lab production origin, so the verifier cannot be redirected to an arbitrary
-network target.
+The switch takes no URL. It always targets the canonical production origin.
 
-Check the root document and representative static assets for HTTP success and the
-security headers declared in `public/_headers`, including the content security
-policy, frame protection, MIME-sniffing protection, referrer policy, and permissions
-policy. Confirm Share/reload, Reset, native inputs, automatic response bars, actual
-square counts, reduced motion, and mobile layout. No source change may intervene
-between candidate validation and this comparison.
+Check the root document and a few static assets for a successful response and for the headers in
+`public/_headers`: content security policy, frame protection, MIME-sniffing protection, referrer
+policy, and permissions policy. By hand, confirm Share and reload, Reset, slider and keyboard
+input, the automatic response bars, square counts, reduced motion, and the mobile layout.
 
-If a known regression appears, stop the release and restore the recorded previous
-Worker version through the owner's approved Cloudflare rollback procedure. Do not
-rewrite Git history, invent a rollback version, or delete recovery worktrees as
-part of deploying. Publish a live URL or release-success statement only after the
-actual deployed version passes its required checks.
+If a regression appears, roll back to the recorded version with
+`npx --no-install wrangler rollback <version-id>`. Announce a release only after the deployed
+version passes these checks.
