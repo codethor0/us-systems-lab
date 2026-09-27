@@ -57,6 +57,18 @@ describe("active Block Board", () => {
       </StrictMode>,
     );
     expect(screen.getByRole("heading", { name: "Block Board", level: 1 })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Ruot Koang Thor (Thor Thor)", level: 2 }),
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: "LinkedIn" }).getAttribute("href")).toBe(
+      "https://www.linkedin.com/in/ruot-koang-thor-monyjang-luak-pech-both-doah-yoal-joak",
+    );
+    expect(screen.getByRole("link", { name: "GitHub" }).getAttribute("href")).toBe(
+      "https://github.com/codethor0",
+    );
+    expect(screen.getByRole("link", { name: "Source" }).getAttribute("href")).toBe(
+      "https://github.com/codethor0/us-systems-lab",
+    );
     expect(screen.getAllByRole("slider")).toHaveLength(20);
     for (const grid of document.querySelectorAll(".bb-grid")) {
       expect(grid.querySelectorAll(".bb-square")).toHaveLength(100);
