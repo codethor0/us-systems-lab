@@ -50,12 +50,20 @@ still shows its signed score, in scientific notation if needed, rather than a fa
 ## What moves what
 
 The relationships are one-way. An input moves the indicators downstream of it and never the ones
-upstream. Eight indicators have no outgoing relationship, so moving their input changes only their
-own tile: `debt_growth_rate`, `food_insecurity`, `hate_crimes`, `homelessness`,
-`institutional_confidence`, `net_interest`, `payrolls_headline` and `savings_rate`. They still
-respond when other indicators move, except `hate_crimes`, which has no relationships at all, on
-purpose. Every tile states what it directly drives. Adding a relationship is a change to the model
-and follows the rules in [CONTRIBUTING.md](CONTRIBUTING.md).
+upstream. Six indicators have no outgoing relationship, so moving their input changes only their
+own tile: `food_insecurity`, `hate_crimes`, `homelessness`, `institutional_confidence`,
+`payrolls_headline` and `savings_rate`. Each one records why in its `terminal` field, and the
+validator rejects a dead end with no stated reason. Four are outcomes the model does not trace
+further; for `payrolls_headline` and `savings_rate`, the downstream effects are too noisy or too
+contested to model. They still respond when other indicators move, except `hate_crimes`, which has
+no relationships at all, on purpose.
+
+Federal borrowing is a loop of two accounting links and one earlier link: interest outlays add to
+the deficit and so to debt growth (`net_interest` to `debt_growth_rate`), debt growth adds to the
+debt stock (`debt_growth_rate` to `federal_debt`), and a larger stock raises interest outlays
+(`federal_debt` to `net_interest`). A path never revisits an indicator, so the loop is counted once
+and does not compound. Every tile states what it directly drives. Adding a relationship is a change
+to the model and follows the rules in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Status
 
@@ -81,13 +89,26 @@ labels, and the difference between them is the most important thing in this proj
 An arrow is modeled unless someone supplies a checkable citation. Nothing is promoted because
 "everyone knows".
 
+Separately, each arrow records what kind of relationship it asserts, because a citation can support
+an association without showing that one thing causes the other:
+
+- **Accounting**: follows from how the measures are defined or added up. Real earnings are nominal
+  earnings adjusted for prices, so inflation lowers them unless pay keeps pace.
+- **Causal**: a mechanism by which one indicator moves the other, such as policy rates feeding into
+  mortgage rates.
+- **Association**: the two move together, and the arrow does not claim which causes which.
+
+Each arrow also carries a rough horizon, short, medium or long, because some relationships take
+months and others years. The arithmetic ignores both labels; they are there so a reader can judge
+each arrow.
+
 The starting value of each indicator has its own, separate label. `primary` means a page at the
 primary publisher was read on a stated date and the figure was found on it. `secondary` means a news
 page or aggregator relays the figure. `pending` means no source page has been read yet, so no
 source is stored. Abstract levers, such as worker bargaining power, sit on an index from 0 to 100 and
 have no baseline at all, because there is nothing measured to check.
 
-The graph currently has 20 nodes and 20 edges: 0 empirical and 20 modeled. Every arrow is therefore
+The graph currently has 20 nodes and 22 edges: 0 empirical and 22 modeled. Every arrow is therefore
 an argument today, and none is yet a finding.
 
 ## How the arithmetic works
@@ -121,9 +142,9 @@ bounded, that it always terminates, and that it is deterministic.
 
 The data lives in [src/data/graph.json](src/data/graph.json), and
 [a validator](src/lib/validate.ts) checks every change to it. The nodes and levers follow two posts
-by the project's author that map U.S. indicators and policy levers. The 20 edges are editorial
-drafts, reviewed and accepted by the author. They are not taken from those posts, and none has a
-citation yet.
+by the project's author that map U.S. indicators and policy levers. The first 20 edges are editorial
+drafts, reviewed and accepted by the author, plus two accounting links that close the federal
+borrowing loop. They are not taken from those posts, and none has a citation yet.
 
 Each starting value below was read from the linked page on 2026-09-19. The `sourceDetail` field of
 each node records the caveats, such as figures that are revised later, and one that is a projection

@@ -14,12 +14,10 @@ const hasOutgoing = new Set(graph.edges.map((edge) => edge.from));
 const hasIncoming = new Set(graph.edges.map((edge) => edge.to));
 
 const NO_OUTGOING = [
-  "debt_growth_rate",
   "food_insecurity",
   "hate_crimes",
   "homelessness",
   "institutional_confidence",
-  "net_interest",
   "payrolls_headline",
   "savings_rate",
 ];
@@ -33,6 +31,11 @@ describe("graph connectivity", () => {
     expect(ids.filter((id) => !hasOutgoing.has(id) && !hasIncoming.has(id))).toEqual([
       "hate_crimes",
     ]);
+  });
+
+  it("records a reason on exactly the indicators with no outgoing relationship", () => {
+    const withReason = graph.nodes.filter((node) => node.terminal !== null).map((node) => node.id);
+    expect(withReason.sort()).toEqual(NO_OUTGOING);
   });
 
   it("documents every no-outgoing indicator in the README by id", () => {

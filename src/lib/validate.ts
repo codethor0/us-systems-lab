@@ -1,4 +1,12 @@
-import { CATEGORIES, CONFIDENCES, STRENGTH_TIERS, VALUE_TYPES, VERIFICATIONS } from "./schema";
+import {
+  CATEGORIES,
+  CONFIDENCES,
+  HORIZONS,
+  KINDS,
+  STRENGTH_TIERS,
+  VALUE_TYPES,
+  VERIFICATIONS,
+} from "./schema";
 import type { Graph, ValidationCode, ValidationError, Verification } from "./schema";
 
 type Raw = Record<string, unknown>;
@@ -41,6 +49,7 @@ const NODE_KEYS = [
   "sourceDetail",
   "retrievedDate",
   "description",
+  "terminal",
 ];
 const EDGE_KEYS = [
   "id",
@@ -49,6 +58,8 @@ const EDGE_KEYS = [
   "direction",
   "strength",
   "confidence",
+  "kind",
+  "horizon",
   "sourceUrl",
   "sourceDetail",
   "retrievedDate",
@@ -381,6 +392,8 @@ function validateEdge(
     );
   }
   const confidence = readEnum(raw, "confidence", CONFIDENCES, path, report);
+  readEnum(raw, "kind", KINDS, path, report);
+  readEnum(raw, "horizon", HORIZONS, path, report);
 
   const claim = raw["claim"];
   if (typeof claim !== "string") {
@@ -405,6 +418,24 @@ function validateEdge(
   checkKeys(raw, EDGE_KEYS, path, report);
 }
 
+/** A node states why it drives nothing exactly when no edge leaves it. */
+function checkTerminals(nodes: unknown[], drivers: ReadonlySet<string>, report: Report): void {
+  nodes.forEach((raw, index) => {
+    if (!isRecord(raw) || typeof raw["id"] !== "string") return;
+    const path = join(`nodes[${String(index)}]`, "terminal");
+    const terminal = raw["terminal"];
+    if (terminal !== null && typeof terminal !== "string") {
+      report(path, "invalid_type", "terminal must be a string or null");
+    } else if (drivers.has(raw["id"])) {
+      if (terminal !== null) {
+        report(path, "terminal_forbidden", "a node that drives an edge is not terminal");
+      }
+    } else if (terminal === null || terminal.trim() === "") {
+      report(path, "terminal_required", "a node with no outgoing edge must say why");
+    }
+  });
+}
+
 export function validateGraph(input: unknown): ValidationError[] {
   const errors: ValidationError[] = [];
   const report: Report = (path, code, message) => {
@@ -417,6 +448,7 @@ export function validateGraph(input: unknown): ValidationError[] {
   }
 
   const nodeIds = new Set<string>();
+  const drivers = new Set<string>();
   const nodes = input["nodes"];
   if (Array.isArray(nodes)) {
     nodes.forEach((node: unknown, index) => {
@@ -431,10 +463,12 @@ export function validateGraph(input: unknown): ValidationError[] {
   if (Array.isArray(edges)) {
     edges.forEach((edge: unknown, index) => {
       validateEdge(edge, index, nodeIds, edgeIds, report);
+      if (isRecord(edge) && typeof edge["from"] === "string") drivers.add(edge["from"]);
     });
   } else {
     report("edges", "invalid_type", "edges must be an array");
   }
+  if (Array.isArray(nodes) && Array.isArray(edges)) checkTerminals(nodes, drivers, report);
 
   checkKeys(input, TOP_KEYS, "", report);
   return errors;

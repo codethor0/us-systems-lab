@@ -751,6 +751,7 @@ describe("the real graph, worked by hand", () => {
    *   E13 real_avg_hourly_earnings->median_household_income +0.5
    *   E14 real_avg_hourly_earnings->savings_rate +0.25
    *   E18 household_debt->savings_rate -0.25
+   *   E21 net_interest->debt_growth_rate +0.5   E22 debt_growth_rate->federal_debt +0.75
    *
    *   mortgage_rate            E1                        = 0.75
    *   inflation                E2                        = -0.5
@@ -760,15 +761,20 @@ describe("the real graph, worked by hand", () => {
    *   real_avg_hourly_earnings E2,E7     -0.5*-0.75*0.7  = 0.2625
    *   institutional_confidence E2,E8     -0.5*-0.25*0.7  = 0.0875
    *   payrolls_headline        E3,E9     -0.5*0.5*0.7    = -0.175
-   *   debt_growth_rate         E3,E10    -0.5*-0.25*0.7  = 0.0875
+   *   debt_growth_rate  E3,E10     -0.5*-0.25*0.7  = 0.0875
+   *                     E4,E21     0.75*0.5*0.7    = 0.2625
+   *                     total 0.35
+   *   federal_debt      E3,E10,E22 -0.5*-0.25*0.75*0.49 = 0.09375*0.49 = 0.0459375
+   *                     E4,E21,E22 0.75*0.5*0.75*0.49   = 0.28125*0.49 = 0.1378125
+   *                     total 0.18375
    *   median_household_income  E2,E7,E13 -0.5*-0.75*0.5*0.49 = 0.091875
    *   savings_rate  E5 = 0.25
    *                 E1,E6,E18  0.75*-0.25*-0.25*0.49 = 0.046875*0.49 = 0.02296875
    *                 E2,E7,E14  -0.5*-0.75*0.25*0.49  = 0.09375*0.49  = 0.0459375
    *                 total 0.31890625
-   * Eleven nodes are reached. poverty_rate is four edges away and is not.
+   * Twelve nodes are reached. poverty_rate is four edges away and is not.
    */
-  it("fed_rate at +1 reaches exactly eleven nodes with the values above", () => {
+  it("fed_rate at +1 reaches exactly twelve nodes with the values above", () => {
     const effects = propagate(real, "fed_rate", 1, DEFAULT_PARAMS);
     const expected: Record<string, number> = {
       mortgage_rate: 0.75,
@@ -779,7 +785,8 @@ describe("the real graph, worked by hand", () => {
       real_avg_hourly_earnings: 0.2625,
       institutional_confidence: 0.0875,
       payrolls_headline: -0.175,
-      debt_growth_rate: 0.0875,
+      debt_growth_rate: 0.35,
+      federal_debt: 0.18375,
       median_household_income: 0.091875,
       savings_rate: 0.31890625,
     };

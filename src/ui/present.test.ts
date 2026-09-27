@@ -23,6 +23,7 @@ function node(overrides: Partial<GraphNode> = {}): GraphNode {
     sourceDetail: "Example",
     retrievedDate: "2026-09-19",
     description: "A sample node.",
+    terminal: null,
     ...overrides,
   };
 }
