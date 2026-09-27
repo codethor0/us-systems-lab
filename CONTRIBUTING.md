@@ -62,17 +62,18 @@ link.
 A node is an indicator or a lever. Its fields are defined in `src/lib/schema.ts` and enforced by
 `src/lib/validate.ts`.
 
-| Field                                        | Rule                                                                                                                              |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| `id`                                         | Lowercase words joined by single underscores, unique.                                                                             |
-| `category`                                   | One of `economic`, `fiscal`, `social`, `institutional`, `policy`.                                                                 |
-| `valueType`                                  | `observed` is a measured series. `projected` is a forecast, never shown as an observation. `index` is an abstract 0 to 100 lever. |
-| `baseline`                                   | A number, or `null`. An `index` node must be `null`.                                                                              |
-| `range`                                      | An editorial display scale that comfortably holds the baseline. It is not data. Explain your choice in the pull request.          |
-| `asOf`                                       | The period the baseline describes: `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `YYYY-Qn` or `FYYYYY`. Required when there is a baseline.     |
-| `verification`                               | `primary`, `secondary` or `pending` for observed and projected nodes. `null` for an `index` node.                                 |
-| `sourceUrl`, `sourceDetail`, `retrievedDate` | Required for `primary` and `secondary`. For `pending`, `sourceUrl` and `retrievedDate` must be `null`.                            |
-| `terminal`                                   | Why nothing is modeled downstream, required exactly when no edge leaves the node. Otherwise `null`.                               |
+| Field                                        | Rule                                                                                                                                         |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                         | Lowercase words joined by single underscores, unique.                                                                                        |
+| `category`                                   | One of `economic`, `fiscal`, `social`, `institutional`, `policy`.                                                                            |
+| `valueType`                                  | `observed` is a measured series. `projected` is a forecast, never shown as an observation. `index` is an abstract 0 to 100 lever.            |
+| `baseline`                                   | A number, or `null`. An `index` node must be `null`.                                                                                         |
+| `range`                                      | An editorial display scale that comfortably holds the baseline. It is not data. Explain your choice in the pull request.                     |
+| `asOf`                                       | The period the baseline describes: `YYYY`, `YYYY-MM`, `YYYY-MM-DD`, `YYYY-Qn` or `FYYYYY`. Required when there is a baseline.                |
+| `verification`                               | `primary`, `secondary` or `pending` for observed and projected nodes. `null` for an `index` node.                                            |
+| `sourceUrl`, `sourceDetail`, `retrievedDate` | Required for `primary` and `secondary`. For `pending`, `sourceUrl` and `retrievedDate` must be `null`.                                       |
+| `cadence`                                    | How often the publisher releases a new figure: `daily`, `weekly`, `monthly`, `quarterly`, `annual` or `irregular`. `null` for `index` nodes. |
+| `terminal`                                   | Why nothing is modeled downstream, required exactly when no edge leaves the node. Otherwise `null`.                                          |
 
 How to verify a starting value:
 
@@ -88,6 +89,18 @@ How to verify a starting value:
   projections and definitions that a reader would otherwise miss.
 - Do not store a derived number, such as a growth rate you computed from two readings, as though it
   had been fetched. `debt_growth_rate` is empty for that reason.
+
+## Refreshing a baseline
+
+`npm run check:freshness` lists the baselines that may have a newer release, judged from each
+node's `cadence` and the end of its period. It reads no network and does not fail. The weekly CI run
+writes the same table to its job summary. A flag is a prompt to read the source, not a finding that
+the value is wrong, and a date that looks current does not catch a revision to the same period.
+
+To refresh a node, open the publisher's page, read the new figure, and update `baseline`, `asOf`,
+`sourceUrl`, `sourceDetail` and `retrievedDate` together in one change, with the release date and
+any revision noted in `sourceDetail`. Update the matching row of the table in README.md. Never
+change the value alone, and never take it from a search result or summary.
 
 ## Adding an edge
 

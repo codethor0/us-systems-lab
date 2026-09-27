@@ -196,6 +196,13 @@ describe("the steps", () => {
     expect(step).toContain("continue-on-error: ${{ github.event_name == 'schedule' }}");
   });
 
+  it("reports baseline freshness on the weekly run only, and never fails on it", () => {
+    const step = /- name: Report baseline freshness\n((?: {8}.*\n?)+)/.exec(workflow)?.[1] ?? "";
+    expect(step).toContain("if: github.event_name == 'schedule'");
+    expect(step).toContain("run: npm run check:freshness");
+    expect(step).not.toContain("--strict");
+  });
+
   it("does not deploy or publish anything; production changes only by a manual owner deploy", () => {
     expect(workflow).not.toMatch(/\b(deploy|publish|wrangler|cloudflare)\b/i);
   });

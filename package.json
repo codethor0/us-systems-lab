@@ -30,6 +30,7 @@
     "preview": "vite preview",
     "test:e2e": "npm run build && npm run test:math && node scripts/block-e2e.mjs",
     "check:sources": "node scripts/check-sources.mjs",
+    "check:freshness": "node scripts/check-freshness.mjs",
     "test:math": "node scripts/model-audit.mjs",
     "check:attribution": "python3 scripts/check-attribution.py"
   },

@@ -47,6 +47,13 @@ export type Confidence = (typeof CONFIDENCES)[number];
 export const KINDS = ["accounting", "causal", "association"] as const;
 export type Kind = (typeof KINDS)[number];
 
+/**
+ * How often the publisher releases a new figure for a node, used only by the freshness report.
+ * irregular covers schedules such as the eight FOMC meetings a year. null for index nodes.
+ */
+export const CADENCES = ["daily", "weekly", "monthly", "quarterly", "annual", "irregular"] as const;
+export type Cadence = (typeof CADENCES)[number];
+
 /** Roughly how long the relationship takes to show: months, a year or two, or several years. */
 export const HORIZONS = ["short", "medium", "long"] as const;
 export type Horizon = (typeof HORIZONS)[number];
@@ -72,6 +79,8 @@ export interface GraphNode {
   sourceDetail: string | null;
   /** ISO date (YYYY-MM-DD) on which the source page was fetched and read. */
   retrievedDate: string | null;
+  /** How often a new figure is published; null for index nodes. */
+  cadence: Cadence | null;
   description: string;
   /**
    * Why the node drives nothing, required exactly when no edge leaves it, so that a dead end is a
@@ -127,6 +136,7 @@ export type ValidationCode =
   | "invalid_strength"
   | "invalid_claim"
   | "forbidden_word"
+  | "cadence_mismatch"
   | "terminal_required"
   | "terminal_forbidden";
 
