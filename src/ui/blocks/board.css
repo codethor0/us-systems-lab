@@ -458,6 +458,14 @@
   padding: 10px;
   color: var(--bb-text-3);
 }
+.bb-share-status {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--bb-text-2);
+}
+.bb-share-status:empty {
+  display: none;
+}
 .bb-footer {
   padding-top: 24px;
   font-size: 10px;

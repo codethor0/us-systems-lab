@@ -336,3 +336,73 @@ describe("review regressions", () => {
     expect(tile("hate_crimes").dataset.pulses).toBeUndefined();
   });
 });
+
+describe("share link copy", () => {
+  function shareField(): HTMLInputElement {
+    const field = screen.getByLabelText("Copy this scenario link");
+    if (!(field instanceof HTMLInputElement)) throw new Error("Missing share field");
+    return field;
+  }
+  const status = (): string | null =>
+    document.querySelector(".bb-share-status")?.textContent ?? null;
+  function stubClipboard(writeText: ((text: string) => Promise<void>) | undefined): void {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: writeText === undefined ? undefined : { writeText },
+    });
+  }
+  afterEach(() => {
+    stubClipboard(undefined);
+  });
+
+  it("copies the current scenario link and confirms it in a status line", async () => {
+    const writeText = vi.fn(() => Promise.resolve());
+    stubClipboard(writeText);
+    render(<BlockApp />);
+    change("fed_rate", "100");
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(writeText).toHaveBeenCalledWith(shareField().value);
+    expect(shareField().value).toContain("fed_rate:100");
+    await waitFor(() => {
+      expect(status()).toBe("Link copied.");
+    });
+    expect(document.querySelector(".bb-share-status")?.getAttribute("role")).toBe("status");
+  });
+
+  it("clears the confirmation when the link changes, so it never describes an older link", async () => {
+    stubClipboard(() => Promise.resolve());
+    render(<BlockApp />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    await waitFor(() => {
+      expect(status()).toBe("Link copied.");
+    });
+    change("productivity", "100");
+    expect(status()).toBe("");
+  });
+
+  it("selects the link and says so when the browser has no clipboard", () => {
+    stubClipboard(undefined);
+    render(<BlockApp />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    expect(status()).toBe(
+      "Could not copy automatically. The link is selected; copy it from there.",
+    );
+    expect(document.activeElement).toBe(shareField());
+  });
+
+  it("falls back the same way when the clipboard refuses the write", async () => {
+    stubClipboard(() => Promise.reject(new Error("denied")));
+    render(<BlockApp />);
+    fireEvent.click(screen.getByRole("button", { name: "Share" }));
+    fireEvent.click(screen.getByRole("button", { name: "Copy link" }));
+    await waitFor(() => {
+      expect(status()).toBe(
+        "Could not copy automatically. The link is selected; copy it from there.",
+      );
+    });
+    expect(document.activeElement).toBe(shareField());
+  });
+});

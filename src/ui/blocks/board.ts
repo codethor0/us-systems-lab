@@ -101,7 +101,7 @@ export function mountBlockBoard(
   reset.dataset.action = "reset";
   const share = button("Share", () => {
     shareBox.hidden = false;
-    shareInput.value = new URL(services.location(levers), window.location.href).href;
+    showShareLink();
     shareInput.focus();
     shareInput.select();
   });
@@ -128,13 +128,43 @@ export function mountBlockBoard(
   shareInput.id = "bb-share-link";
   shareInput.type = "text";
   shareInput.readOnly = true;
+  const copyStatus = element("p", "bb-share-status");
+  copyStatus.setAttribute("role", "status");
+  const copy = button("Copy link", () => {
+    const link = shareInput.value;
+    const fallback = (): void => {
+      if (destroyed || shareInput.value !== link) return;
+      shareInput.focus();
+      shareInput.select();
+      copyStatus.textContent =
+        "Could not copy automatically. The link is selected; copy it from there.";
+    };
+    // Not every browser or context exposes the Clipboard API, and a write can be refused.
+    const clipboard = (navigator as { clipboard?: Pick<Clipboard, "writeText"> }).clipboard;
+    if (clipboard === undefined) {
+      fallback();
+      return;
+    }
+    clipboard.writeText(link).then(() => {
+      if (!destroyed && shareInput.value === link) copyStatus.textContent = "Link copied.";
+    }, fallback);
+  });
+  copy.dataset.action = "copy-link";
+  /** Keeps the share field on the current scenario; a copy confirmation for an older link is cleared. */
+  function showShareLink(): void {
+    const link = new URL(services.location(levers), window.location.href).href;
+    if (shareInput.value !== link) copyStatus.textContent = "";
+    shareInput.value = link;
+  }
   shareBox.append(
     shareLabel,
     shareInput,
+    copy,
     button("Close link", () => {
       shareBox.hidden = true;
       share.focus();
     }),
+    copyStatus,
   );
 
   const legend = element("section", "bb-legend");
@@ -424,7 +454,7 @@ export function mountBlockBoard(
     // Only URL writes are coalesced; squares, meters, and inputs render immediately.
     urlSync.request(services.location(levers));
     if (!shareBox.hidden) {
-      shareInput.value = new URL(services.location(levers), window.location.href).href;
+      showShareLink();
     }
   }
 
@@ -536,7 +566,7 @@ export function mountBlockBoard(
     // History can load zero inputs without calling writeLocation. Keep an open
     // share field tied to the current scenario rather than the previous one.
     if (!shareBox.hidden) {
-      shareInput.value = new URL(services.location(levers), window.location.href).href;
+      showShareLink();
     }
   }
   const loadLocation = (): void => {
