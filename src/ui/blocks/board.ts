@@ -412,10 +412,62 @@ export function mountBlockBoard(
     });
   }
 
-  const footer = element(
-    "footer",
-    "bb-footer",
-    `Block Board v1 | Build ${services.build} | Model ${services.stamp} | ${String(graph.nodes.length)} indicators / ${String(graph.edges.length)} relationships. Sources and assumptions are inside each tile.`,
+  const footer = element("footer", "bb-footer");
+  const footerGrid = element("div", "bb-footer-grid");
+
+  const projectPanel = element("section", "bb-footer-panel");
+  const projectTitle = element("h2", "bb-footer-title", "US Systems Lab");
+  projectTitle.id = "bb-about-project";
+  projectPanel.setAttribute("aria-labelledby", projectTitle.id);
+  projectPanel.append(
+    element("p", "bb-footer-eyebrow", "ABOUT THIS PROJECT"),
+    projectTitle,
+    element(
+      "p",
+      "bb-footer-copy",
+      "An open-source interactive lab for exploring relationships across U.S. economic and social indicators. Built to make assumptions visible, testable, and easy to inspect.",
+    ),
+  );
+
+  const authorPanel = element("section", "bb-footer-panel");
+  const authorTitle = element("h2", "bb-footer-title", "Ruot Koang Thor (Thor Thor)");
+  authorTitle.id = "bb-about-author";
+  authorPanel.setAttribute("aria-labelledby", authorTitle.id);
+  const authorLinks = element("nav", "bb-footer-links");
+  authorLinks.setAttribute("aria-label", "Author links");
+  const linkedIn = element("a", "bb-footer-link", "LinkedIn");
+  linkedIn.href =
+    "https://www.linkedin.com/in/ruot-koang-thor-monyjang-luak-pech-both-doah-yoal-joak";
+  linkedIn.target = "_blank";
+  linkedIn.rel = "noreferrer noopener";
+  const github = element("a", "bb-footer-link", "GitHub");
+  github.href = "https://github.com/codethor0";
+  github.target = "_blank";
+  github.rel = "noreferrer noopener";
+  const source = element("a", "bb-footer-link", "Source");
+  source.href = "https://github.com/codethor0/us-systems-lab";
+  source.target = "_blank";
+  source.rel = "noreferrer noopener";
+  authorLinks.append(linkedIn, github, source);
+  authorPanel.append(
+    element("p", "bb-footer-eyebrow", "BUILT BY"),
+    authorTitle,
+    element(
+      "p",
+      "bb-footer-copy",
+      "Cybersecurity researcher, open-source builder, inventor, and author exploring security, AI, systems, and society.",
+    ),
+    authorLinks,
+  );
+
+  footerGrid.append(projectPanel, authorPanel);
+  footer.append(
+    footerGrid,
+    element(
+      "p",
+      "bb-footer-meta",
+      `Block Board v1 | Build ${services.build} | Model ${services.stamp} | ${String(graph.nodes.length)} indicators / ${String(graph.edges.length)} relationships. Sources and assumptions are inside each tile.`,
+    ),
   );
   // A labelled section keeps the disclaimer and counts inside a landmark (axe "region").
   const summary = element("section", "bb-summary");
