@@ -26,16 +26,29 @@ squares. Move one input and watch the tiles it is connected to gain or lose squa
 - Every tile starts at **50 out of 100** in neutral grey, labeled **Not adjusted**. The 50 is a
   display convention that leaves room to move both up and down. It is not a health rating.
 - Set **your input** for a tile with its slider, or click a square. Inputs move in steps of five.
-- The squares and the **Combined response (automatic)** bar show the tile's **combined result**:
-  your input plus the effects that reach it from other inputs over paths of up to three
-  relationships. The bar is continuous; the squares are rounded. Results never feed back in as
-  inputs.
+- The squares and the **Model response** bar show the tile's normalized model response: your
+  input plus the effects that reach it from other inputs over paths of up to three relationships.
+  The bar is continuous; the squares are rounded. Results never feed back in as inputs.
+- The line under each title is the **real-world baseline**, the stored figure with its period. It
+  never changes with your input. The model response is a position on an editorial 0 to 100 scale,
+  not a predicted value of the real indicator.
 - Color shows level: grey at 50, blue below, orange above. Blue and orange stay distinguishable
   with the common forms of color blindness. Color does not show worse to better: a higher federal
   debt is not a better one.
 - The page follows the system light or dark setting.
-- Open **Why & source** on a tile for the paths behind its result, the relationships it belongs to,
-  and the stored baseline with its source. A stored baseline does not change with your input.
+- Open **Why & source** on a tile for the paths behind its result, strongest first, with the kind of
+  every step; the relationships it belongs to, each labeled by kind, citation status and horizon;
+  why it drives nothing, if it is a dead end; and the stored baseline with its source.
+- Under a moved tile, one line says how its direction holds up when the two editorial settings
+  change. See [Sensitivity](#sensitivity).
+- **Show** filters the tiles by category. Hidden tiles still take part in the calculation.
+- **Cited relationships only** reruns the same arithmetic on the relationships that carry a
+  citation. None do yet, so in this view no input reaches another tile, and each tile says that
+  this is a gap in citations, not evidence of no effect. The setting is not part of a Share link:
+  links carry inputs only and always open with every relationship.
+- **Save as scenario A** keeps the current results in this tab. Change inputs and each tile shows
+  scenario A beside the current position. Reset and history navigation change the inputs, not A;
+  **Clear A** removes it. Nothing is stored in the address bar, the browser or anywhere else.
 - **Reset** returns every tile to 50. **Share** shows a link that reproduces your inputs, and
   **Copy link** copies it.
 - Tiles pulse briefly, at most once a second, when their result changes. The checkbox in the header
@@ -46,6 +59,22 @@ The display position is `50 + 50 x score`, where the score is the model's final 
 squares. Floating-point noise, such as effects that cancel to 1e-17 instead of 0, is cleaned up
 for display only; the model result itself is not changed. A real response smaller than one square
 still shows its signed score, in scientific notation if needed, rather than a false zero.
+
+## Sensitivity
+
+The decay of 0.7 and the limit of three relationships are editorial choices. To show how much they
+matter, the board reruns every scenario under nine nearby settings: decay 0.5, 0.7 and 0.9, with
+paths of up to 2, 3 and 4 relationships. The default is one of the nine. Each moved tile then says
+one of three things:
+
+- **Same direction under all 9 tested settings**, with the range of positions if they differ.
+- **Moves under some tested settings only**: the effect needs a longer path than some settings
+  allow. Poverty's response to the federal funds rate is an example: it needs four relationships.
+- **Direction depends on the settings**: routes of different lengths pull opposite ways, and the
+  settings decide which wins.
+
+This is an explanation of the model, not a second prediction. The same engine produces every
+number; [src/model/analysis.ts](src/model/analysis.ts) only changes its two parameters.
 
 ## What moves what
 

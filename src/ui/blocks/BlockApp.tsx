@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import graphJson from "../../data/graph.json";
 import { parseGraph } from "../../lib/validate";
+import { evidenceGraph, SENSITIVITY_SETTINGS, sensitivity } from "../../model/analysis";
 import { combineEffects } from "../../model/effects";
 import { dataStamp } from "../../scenario/stamp";
 import { decodeScenario } from "../../scenario/url";
@@ -18,11 +19,14 @@ import "./board.css";
 
 const GRAPH = parseGraph(graphJson);
 const STAMP = dataStamp(GRAPH);
+const EVIDENCE = evidenceGraph(GRAPH);
 const LABELS = new Map(GRAPH.nodes.map((node) => [node.id, node.label]));
 const SERVICES: BoardServices = {
   build: BLOCK_BUILD,
   stamp: STAMP,
-  calculate: (levers) => combineEffects(GRAPH, levers),
+  calculate: (levers, evidenceOnly) => combineEffects(evidenceOnly ? EVIDENCE : GRAPH, levers),
+  sensitivity: (levers, evidenceOnly) => sensitivity(evidenceOnly ? EVIDENCE : GRAPH, levers),
+  sensitivitySettings: SENSITIVITY_SETTINGS.length,
   baseline: formatBaseline,
   location: (levers) =>
     scenarioLocation(window.location.pathname, window.location.hash, levers, STAMP),

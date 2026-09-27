@@ -104,7 +104,7 @@ describe("active Block Board", () => {
     ).toHaveLength(20);
     expect(screen.getAllByRole("meter")).toHaveLength(20);
     const earnings = screen.getByRole("meter", {
-      name: "Real hourly earnings combined modeled response",
+      name: "Real hourly earnings normalized model response",
     });
     expect(earnings.getAttribute("aria-valuenow")).toBe("50");
     change("productivity", "100");
@@ -418,5 +418,116 @@ describe("share link copy", () => {
       );
     });
     expect(document.activeElement).toBe(shareField());
+  });
+});
+
+describe("model transparency and analysis", () => {
+  function choose(label: string): void {
+    fireEvent.click(screen.getByRole("radio", { name: label }));
+  }
+  function evidenceOnly(): HTMLInputElement {
+    const box = screen.getByRole("checkbox", { name: "Cited relationships only" });
+    if (!(box instanceof HTMLInputElement)) throw new Error("Missing evidence toggle");
+    return box;
+  }
+
+  it("shows the real-world baseline apart from the normalized model response", () => {
+    render(<BlockApp />);
+    const baseline = (id: string) => tile(id).querySelector(".bb-baseline")?.textContent;
+    expect(baseline("inflation")).toBe("Real-world baseline: 3.4 % YoY (2026-08)");
+    expect(baseline("net_interest")).toBe("Real-world projection: 3.3 % of GDP (FY2026)");
+    expect(baseline("debt_growth_rate")).toBe("Real-world baseline: not stored yet");
+    expect(baseline("worker_bargaining_power")).toBe(
+      "Real-world value: none (abstract 0 to 100 lever)",
+    );
+    expect(tile("inflation").querySelector(".bb-micro")?.textContent).toBe("MODEL RESPONSE");
+  });
+
+  it("filters tiles by category without changing the calculation or the address", () => {
+    window.history.replaceState(null, "", "/?l=fed_rate:100");
+    render(<BlockApp />);
+    const before = tile("median_household_income").dataset.position;
+    const search = window.location.search;
+    choose("fiscal");
+    expect(tile("federal_debt").hidden).toBe(false);
+    expect(tile("inflation").hidden).toBe(true);
+    expect(tile("median_household_income").dataset.position).toBe(before);
+    expect(screen.getByText(/Showing 3 of 20 indicators/)).toBeTruthy();
+    expect(window.location.search).toBe(search);
+    choose("All indicators");
+    expect(tile("inflation").hidden).toBe(false);
+    expect(screen.queryByText(/Showing \d+ of 20 indicators/)).toBeNull();
+  });
+
+  it("uses only cited relationships in evidence-only mode and says why nothing moves", () => {
+    window.history.replaceState(null, "", "/?l=fed_rate:100");
+    render(<BlockApp />);
+    const search = window.location.search;
+    expect(tile("mortgage_rate").dataset.state).toBe("up");
+    fireEvent.click(evidenceOnly());
+    expect(tile("mortgage_rate").dataset.state).toBe("idle");
+    expect(tile("fed_rate").dataset.position).toBe("100");
+    expect(tile("mortgage_rate").querySelector(".bb-why")?.textContent).toBe(
+      "No cited relationship reaches this tile. That is a gap in citations, not evidence of no effect.",
+    );
+    expect(screen.getByText(/0 of 22 relationships have a citation/)).toBeTruthy();
+    expect(tile("fed_rate").querySelector(".bb-feeds")?.textContent).toBe(
+      "Drives nothing through cited relationships; its links are modeled.",
+    );
+    expect(window.location.search).toBe(search);
+    fireEvent.click(evidenceOnly());
+    expect(tile("mortgage_rate").dataset.state).toBe("up");
+  });
+
+  it("says how each moved tile holds up across the tested settings", () => {
+    window.history.replaceState(null, "", "/?l=fed_rate:100");
+    render(<BlockApp />);
+    const robust = (id: string) => tile(id).querySelector(".bb-robustness")?.textContent;
+    expect(robust("mortgage_rate")).toBe("Same direction under all 9 tested settings.");
+    // fed -> inflation -> real earnings -> median income needs 3 relationships: zero at 2.
+    expect(robust("median_household_income")).toMatch(/^Moves under some tested settings only/);
+    expect(robust("poverty_rate")).toBe("");
+  });
+
+  it("compares with a saved scenario A held in memory only", () => {
+    window.history.replaceState(null, "", "/?l=fed_rate:100");
+    render(<BlockApp />);
+    const compare = (id: string) => tile(id).querySelector<HTMLElement>(".bb-compare");
+    expect(compare("mortgage_rate")?.hidden).toBe(true);
+    fireEvent.click(screen.getByRole("button", { name: "Save as scenario A" }));
+    change("fed_rate", "50");
+    expect(compare("mortgage_rate")?.textContent).toBe("Scenario A 87.5, now 50 (-37.5).");
+    expect(screen.getByText(/Comparing with scenario A: \d+ of 20 tiles differ/)).toBeTruthy();
+    expect(window.location.search).not.toContain("A");
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+    expect(compare("mortgage_rate")?.hidden).toBe(false);
+    fireEvent.click(screen.getByRole("button", { name: "Clear A" }));
+    expect(compare("mortgage_rate")?.hidden).toBe(true);
+    expect(screen.queryByRole("button", { name: "Clear A" })).toBeNull();
+  });
+
+  it("lists paths strongest first with the kind of every step", () => {
+    window.history.replaceState(null, "", "/?l=fed_rate:100");
+    render(<BlockApp />);
+    const rows = [...tile("savings_rate").querySelectorAll(".bb-paths li")];
+    // fed direct 0.25, then via inflation and earnings 0.0459375, then via mortgage and debt 0.02296875.
+    expect(rows.map((row) => row.firstElementChild?.textContent)).toEqual([
+      "Federal funds rate > Personal saving rate: +0.25",
+      "Federal funds rate > Inflation > Real hourly earnings > Personal saving rate: +0.0459",
+      "Federal funds rate > 30-year mortgage rate > Household debt > Personal saving rate: +0.023",
+    ]);
+    expect(rows[1]?.querySelector(".bb-steps")?.textContent).toBe(
+      "Each step: down (Causal | modeled | long run); down (Accounting | modeled | short run); up (Causal | modeled | short run)",
+    );
+  });
+
+  it("labels relationships and states why a dead end drives nothing", () => {
+    render(<BlockApp />);
+    const badges = [...tile("fed_rate").querySelectorAll(".bb-badge")].map((b) => b.textContent);
+    expect(badges).toContain("Causal | modeled | short run");
+    expect(tile("savings_rate").querySelector(".bb-terminal")?.textContent).toMatch(
+      /^Drives nothing: /,
+    );
+    expect(tile("hate_crimes").textContent).toContain("Isolated on purpose.");
   });
 });
