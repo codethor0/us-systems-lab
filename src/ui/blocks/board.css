@@ -239,7 +239,7 @@
 }
 .bb-board {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr));
   gap: 14px;
   align-items: stretch;
 }
@@ -417,6 +417,7 @@
 }
 .bb-paths {
   color: var(--bb-text-3);
+  padding-left: 18px;
 }
 .bb-source {
   display: inline-flex;
@@ -554,6 +555,96 @@
 }
 .bb-pulse {
   animation: bb-response-pulse 700ms ease-in-out 1;
+}
+.bb-tools {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 10px 0 12px;
+  border-bottom: 1px solid var(--bb-rule);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  color: var(--bb-text-2);
+  font-size: 12px;
+}
+.bb-filter {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 12px;
+}
+.bb-filter legend {
+  float: left;
+  padding: 0;
+  margin-right: 4px;
+  font-weight: 700;
+  line-height: 44px;
+}
+.bb-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+.bb-choice input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--bb-text-3);
+}
+.bb-compare-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.bb-tool-notes {
+  flex-basis: 100%;
+}
+.bb-tool-notes p {
+  margin: 0;
+}
+.bb-tool-notes p:empty {
+  display: none;
+}
+.bb-baseline {
+  margin: -8px 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--bb-text-2);
+  overflow-wrap: anywhere;
+}
+.bb-robustness,
+.bb-compare {
+  font-size: 11px;
+  color: var(--bb-text-2);
+  line-height: 1.5;
+  margin: 0 0 6px;
+  overflow-wrap: anywhere;
+}
+.bb-robustness:empty {
+  display: none;
+}
+.bb-badge {
+  display: inline-block;
+  margin-right: 4px;
+  padding: 0 6px;
+  border: 1px solid var(--bb-border-control);
+  border-radius: 4px;
+  font-weight: 700;
+  color: var(--bb-text-2);
+}
+.bb-paths li span {
+  display: block;
+}
+.bb-steps {
+  color: var(--bb-text-3);
+  overflow-wrap: anywhere;
 }
 @media (max-width: 620px) {
   .bb-app {

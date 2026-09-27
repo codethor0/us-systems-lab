@@ -7,7 +7,11 @@ import {
   movedText,
   signed,
   summaryText,
+  compareText,
+  relationshipBadge,
+  sensitivityText,
 } from "./view";
+import type { NodeSensitivity } from "../../model/analysis";
 
 describe("Block Board display coordinates", () => {
   it("maps neutral and signed endpoints without changing the model score", () => {
@@ -89,5 +93,43 @@ describe("Block Board display coordinates", () => {
     expect(movedText(0)).toBe("0 tiles moved.");
     expect(movedText(1)).toBe("1 tile moved.");
     expect(movedText(5)).toBe("5 tiles moved.");
+  });
+});
+
+describe("analysis display text", () => {
+  it("describes each robustness class, with a range only when the settings disagree", () => {
+    const at = (robustness: NodeSensitivity["robustness"], min: number, max: number) =>
+      sensitivityText({ nodeId: "x", robustness, min, max }, 9);
+    expect(at("robust", 0.5, 0.5)).toBe("Same direction under all 9 tested settings.");
+    expect(at("robust", 0.08, 0.16)).toBe(
+      "Same direction under all 9 tested settings; position 54 to 58.",
+    );
+    expect(at("partial", -0.25, 0)).toBe(
+      "Moves under some tested settings only, usually the longer path limits; position 37.5 to 50.",
+    );
+    expect(at("direction", -0.25, 0.155)).toBe(
+      "Direction depends on the settings; position 37.5 to 57.75.",
+    );
+    expect(at("none", 0, 0)).toBe("");
+  });
+
+  it("compares a tile with scenario A on the display scale", () => {
+    expect(compareText(0.25, 0.1)).toBe("Scenario A 62.5, now 55 (-7.5).");
+    expect(compareText(0, 0.5)).toBe("Scenario A 50, now 75 (+25).");
+    expect(compareText(0.2, 0.2)).toBe("Scenario A 60, now 60 (no change).");
+    expect(compareText(0.3, 0.1 + 0.2)).toBe("Scenario A 65, now 65 (no change).");
+    expect(compareText(0, 1e-9)).toBe("Scenario A 50, now 50 (+5.00e-8).");
+  });
+
+  it("labels a relationship by kind, citation status and horizon", () => {
+    expect(relationshipBadge({ kind: "accounting", confidence: "modeled", horizon: "short" })).toBe(
+      "Accounting | modeled | short run",
+    );
+    expect(relationshipBadge({ kind: "causal", confidence: "empirical", horizon: "long" })).toBe(
+      "Causal | cited | long run",
+    );
+    expect(
+      relationshipBadge({ kind: "association", confidence: "modeled", horizon: "medium" }),
+    ).toBe("Association | modeled | medium run");
   });
 });

@@ -59,9 +59,13 @@ Requires Google Chrome or Chromium. Builds the production bundle and drives the 
   the accessible meter value, and squares.
 - Multiple inputs together, source links, Share links, reload, Reset, browser history, keyboard,
   pointer and touch input, and reduced motion.
+- The category filter, cited-relationships-only mode and scenario A at 1440, 390 and 320 pixel
+  widths: hidden tiles, no modeled edge in cited-only mode, the comparison text, no horizontal
+  overflow, and an unchanged address bar.
 - A deliberately broken tile, which must make the suite fail.
 - An axe-core scan for WCAG 2.2 A and AA rules in light and dark mode, at neutral and with a
-  lever raised, with every "Why & source" panel open. A button with no accessible name is added
+  lever raised, with every "Why & source" panel open, and once more with the filter, cited-only
+  mode and scenario A all active. A button with no accessible name is added
   at the end as a control and must be reported.
 
 The page's build identifier must match the source being tested.
