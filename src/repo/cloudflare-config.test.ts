@@ -12,7 +12,7 @@ const wranglerPath = path.join(root, "wrangler.jsonc");
 describe("Cloudflare static-only deployment contract", () => {
   it("pins the exact deployment runtime and Wrangler version", () => {
     expect(nvmrc).toBe("24.18.0");
-    expect(packageJson.devDependencies?.wrangler).toBe("4.135.0");
+    expect(packageJson.devDependencies?.wrangler).toBe("4.143.1");
   });
 
   it("uses an assets-only SPA configuration with no runtime bindings", () => {
