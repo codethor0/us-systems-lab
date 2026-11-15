@@ -234,3 +234,7 @@ details.
 - [DEPLOYMENT.md](DEPLOYMENT.md) records the hosting decision and the manual steps.
 - [TESTING.md](TESTING.md) and [SECURITY.md](SECURITY.md) describe verification and how to report a
   vulnerability.
+
+## Support
+
+If this project is useful to you, you can support its continued development through [GitHub Sponsors](https://github.com/sponsors/codethor0).
